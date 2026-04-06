@@ -11,7 +11,9 @@ class UserManagementController extends Controller
 {
     public function index()
     {
-        $query = User::query()->orderByDesc('id');
+        $query = User::query()
+            ->where('role', '!=', 'admin')
+            ->orderByDesc('id');
 
         if (request()->filled('search')) {
             $search = request()->string('search');
@@ -40,7 +42,7 @@ class UserManagementController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:6'],
-            'role' => ['required', Rule::in(['admin', 'teacher', 'student'])],
+            'role' => ['required', Rule::in(['teacher', 'student'])],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -53,11 +55,15 @@ class UserManagementController extends Controller
 
     public function update(Request $request, User $user)
     {
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.users.index')->with('error', 'Cannot modify admin account.');
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:6'],
-            'role' => ['required', Rule::in(['admin', 'teacher', 'student'])],
+            'role' => ['required', Rule::in(['teacher', 'student'])],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -73,6 +79,10 @@ class UserManagementController extends Controller
 
     public function destroy(User $user)
     {
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.users.index')->with('error', 'Cannot delete admin account.');
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');

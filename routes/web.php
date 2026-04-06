@@ -9,37 +9,59 @@ use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\TopicManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
 
+// =====================
+// ROUTE CÔNG KHAI (Public Routes)
+// =====================
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+});
+// Logout - cần đăng nhập mới logout được
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Trang chủ - redirect đến dashboard nếu đã login, ngược lại đến login
 Route::get('/', function () {
-    return redirect()->route('admin.roles.index');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/roles', [RoleManagementController::class, 'index'])->name('roles.index');
-    Route::patch('/roles/{user}', [RoleManagementController::class, 'update'])->name('roles.update');
-
-    Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
-    Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
-    Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
-
-    Route::get('/topics', [TopicManagementController::class, 'index'])->name('topics.index');
-    Route::post('/topics', [TopicManagementController::class, 'store'])->name('topics.store');
-    Route::put('/topics/{topic}', [TopicManagementController::class, 'update'])->name('topics.update');
-    Route::delete('/topics/{topic}', [TopicManagementController::class, 'destroy'])->name('topics.destroy');
-
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-});
-
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
+// =====================
+// ROUTE CẦN ĐĂNG NHẬP (Authenticated Routes)
+// =====================
 Route::middleware('auth')->group(function () {
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // User quản lý Topics (cần role admin)
     Route::middleware('role:admin')->group(function () {
         Route::resource('topics', TopicController::class);
     });
 });
+
+// =====================
+// ROUTE QUẢN TRỊ (Admin Routes) - CẦN ĐĂNG NHẬP VÀ CÓ ROLE ADMIN
+// =====================
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', 'role:admin'])
+    ->group(function () {
+        // Quản lý Roles
+        Route::get('/roles', [RoleManagementController::class, 'index'])->name('roles.index');
+        Route::patch('/roles/{user}', [RoleManagementController::class, 'update'])->name('roles.update');
+
+        // Quản lý Users
+        Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
+        Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+
+        // Quản lý Topics
+        Route::get('/topics', [TopicManagementController::class, 'index'])->name('topics.index');
+        Route::post('/topics', [TopicManagementController::class, 'store'])->name('topics.store');
+        Route::put('/topics/{topic}', [TopicManagementController::class, 'update'])->name('topics.update');
+        Route::delete('/topics/{topic}', [TopicManagementController::class, 'destroy'])->name('topics.destroy');
+
+        // Báo cáo
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    });
