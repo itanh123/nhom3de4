@@ -77,6 +77,11 @@ class Exam extends Model
         return $this->hasMany(ExamResult::class);
     }
 
+    public function results(): HasMany
+    {
+        return $this->examResults();
+    }
+
     public function scopePublished($query)
     {
         return $query->where('is_published', true);
@@ -99,11 +104,11 @@ class Exam extends Model
 
     public function canTake(): bool
     {
-        if (!$this->is_published || !$this->is_active) {
+        if (! $this->is_published || ! $this->is_active) {
             return false;
         }
 
-        if ($this->status === self::STATUS_CLOSED || $this->status === self::STATUS_ARCHIVED) {
+        if (in_array($this->status, [self::STATUS_CLOSED, self::STATUS_ARCHIVED], true)) {
             return false;
         }
 

@@ -11,11 +11,17 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_TEACHER = 'teacher';
+    public const ROLE_STUDENT = 'student';
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
+        'avatar',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -25,12 +31,9 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
         'password' => 'hashed',
     ];
-
-    public const ROLE_ADMIN = 'admin';
-    public const ROLE_TEACHER = 'teacher';
-    public const ROLE_STUDENT = 'student';
 
     public static function roles(): array
     {
@@ -59,6 +62,21 @@ class User extends Authenticatable
     public function topics(): HasMany
     {
         return $this->hasMany(Topic::class, 'created_by');
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class, 'created_by');
+    }
+
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class, 'created_by');
+    }
+
+    public function examResults(): HasMany
+    {
+        return $this->hasMany(ExamResult::class, 'student_id');
     }
 
     public function activityLogs(): HasMany

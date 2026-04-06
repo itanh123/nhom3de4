@@ -12,14 +12,16 @@ class Topic extends Model
     use HasFactory;
 
     protected $fillable = [
+        'created_by',
+        'parent_id',
         'name',
         'description',
-        'parent_id',
-        'created_by',
+        'is_public',
     ];
 
     protected $casts = [
         'parent_id' => 'integer',
+        'is_public' => 'boolean',
     ];
 
     public function creator(): BelongsTo
@@ -29,17 +31,32 @@ class Topic extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(Topic::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(Topic::class, 'parent_id');
+        return $this->hasMany(self::class, 'parent_id')->orderBy('name');
     }
 
     public function descendants(): HasMany
     {
         return $this->children()->with('descendants');
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class);
+    }
+
+    public function importHistories(): HasMany
+    {
+        return $this->hasMany(ImportHistory::class);
     }
 
     public function isParent(): bool
@@ -49,11 +66,6 @@ class Topic extends Model
 
     public function hasChildren(): bool
     {
-        return $this->children()->count() > 0;
-    }
-
-    public function importHistories(): HasMany
-    {
-        return $this->hasMany(ImportHistory::class);
+        return $this->children()->exists();
     }
 }
