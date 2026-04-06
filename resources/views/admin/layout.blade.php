@@ -32,6 +32,12 @@
         <a href="{{ route('admin.topics.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.topics.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
             <span class="material-symbols-outlined text-base">account_tree</span><span>Topic Management</span>
         </a>
+        <a href="{{ route('questions.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('questions.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
+            <span class="material-symbols-outlined text-base">quiz</span><span>Question Management</span>
+        </a>
+        <a href="{{ route('exams.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('exams.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
+            <span class="material-symbols-outlined text-base">assignment</span><span>Exam Management</span>
+        </a>
         <a href="{{ route('admin.reports.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.reports.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
             <span class="material-symbols-outlined text-base">insights</span><span>Reports</span>
         </a>
