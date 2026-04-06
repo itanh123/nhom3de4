@@ -21,6 +21,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'avatar',
+        'is_active',
     ];
 
     /**
@@ -40,5 +43,27 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
+        'password' => 'hashed',
     ];
+
+    public function topics()
+    {
+        return $this->hasMany(Topic::class, 'created_by');
+    }
+
+    public function questions()
+    {
+        return $this->hasMany(Question::class, 'created_by');
+    }
+
+    public function exams()
+    {
+        return $this->hasMany(Exam::class, 'created_by');
+    }
+
+    public function examResults()
+    {
+        return $this->hasMany(ExamResult::class, 'student_id');
+    }
 }
