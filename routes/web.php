@@ -3,6 +3,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TopicController;
+use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ExamController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleManagementController;
@@ -36,6 +38,21 @@ Route::middleware('auth')->group(function () {
     // User quản lý Topics (cần role admin)
     Route::middleware('role:admin')->group(function () {
         Route::resource('topics', TopicController::class);
+    });
+
+    // Quản lý Questions (cần role admin hoặc teacher)
+    Route::middleware('role:admin,teacher')->group(function () {
+        Route::resource('questions', QuestionController::class)->except(['show']);
+        Route::get('/questions/{question}', [QuestionController::class, 'show'])->name('questions.show');
+        Route::patch('/questions/{question}/toggle-active', [QuestionController::class, 'toggleActive'])->name('questions.toggleActive');
+    });
+
+    // Quản lý Exams (cần role admin hoặc teacher)
+    Route::middleware('role:admin,teacher')->group(function () {
+        Route::resource('exams', ExamController::class)->except(['show']);
+        Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
+        Route::patch('/exams/{exam}/toggle-publish', [ExamController::class, 'togglePublish'])->name('exams.togglePublish');
+        Route::get('/exams/questions', [ExamController::class, 'getQuestionsByTopic'])->name('exams.questions');
     });
 });
 
