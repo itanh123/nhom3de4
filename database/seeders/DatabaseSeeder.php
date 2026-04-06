@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
             ExamQuestionsTableSeeder::class, // 7. exam_questions → exams, questions
             ExamResultsTableSeeder::class,   // 8. exam_results → exams, users
             ExamAnswersTableSeeder::class,   // 9. exam_answers → exam_results, questions, answers
+            AiConfigSeeder::class,
+            ActivityLogSeeder::class,
+            ImportHistorySeeder::class,
         ]);
     }
 }

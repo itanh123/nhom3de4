@@ -12,10 +12,12 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->string('email', 150)->unique();
-            $table->string('password');
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password', 255);
             $table->enum('role', ['admin', 'teacher', 'student'])->default('student');
-            $table->string('avatar')->nullable();
+            $table->string('avatar', 255)->nullable();
             $table->boolean('is_active')->default(true);
+            $table->rememberToken();
             $table->timestamps();
         });
     }
