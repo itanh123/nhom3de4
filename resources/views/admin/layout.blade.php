@@ -20,6 +20,9 @@
         <p class="text-xs text-slate-500 uppercase tracking-widest">Quiz Generator</p>
     </div>
     <nav class="space-y-2 text-sm">
+        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.dashboard*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
+            <span class="material-symbols-outlined text-base">dashboard</span><span>Dashboard</span>
+        </a>
         <a href="{{ route('admin.roles.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.roles.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
             <span class="material-symbols-outlined text-base">admin_panel_settings</span><span>Role Management</span>
         </a>
