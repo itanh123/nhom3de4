@@ -46,6 +46,10 @@ Route::prefix('admin')
     ->name('admin.')
     ->middleware(['auth', 'role:admin'])
     ->group(function () {
+        // Dashboard (trang chính)
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+
         // Quản lý Roles
         Route::get('/roles', [RoleManagementController::class, 'index'])->name('roles.index');
         Route::patch('/roles/{user}', [RoleManagementController::class, 'update'])->name('roles.update');
