@@ -37,7 +37,24 @@
 
 <header class="fixed top-0 left-64 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-20 px-6 flex items-center justify-between">
     <h2 class="brand font-bold text-slate-800">{{ $title ?? 'Admin' }}</h2>
-    <span class="text-xs text-slate-500">Backend CRUD dashboard</span>
+    <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <span class="text-xs font-bold text-blue-700">{{ substr(auth()->user()->name, 0, 1) }}</span>
+            </div>
+            <span class="text-sm font-medium text-slate-700">{{ auth()->user()->name }}</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                {{ ucfirst(auth()->user()->role) }}
+            </span>
+        </div>
+        <form method="POST" action="{{ route('logout') }}" class="inline">
+            @csrf
+            <button type="submit" class="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-base">logout</span>
+                Đăng xuất
+            </button>
+        </form>
+    </div>
 </header>
 
 <main class="ml-64 pt-20 p-6">
