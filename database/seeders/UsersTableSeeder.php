@@ -12,7 +12,7 @@ class UsersTableSeeder extends Seeder
     {
         DB::table('users')->insert([
             // Admins (ID 1-2)
-            ['name' => 'Nguyễn Văn Hùng',   'email' => 'admin@edu.vn',           'password' => Hash::make('password'), 'role' => 'admin',   'avatar' => null, 'is_active' => true,  'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Vũ Hải Anh',   'email' => 'admin@edu.vn',           'password' => Hash::make('password'), 'role' => 'admin',   'avatar' => null, 'is_active' => true,  'created_at' => now(), 'updated_at' => now()],
             ['name' => 'Trần Thị Mai',       'email' => 'mai.tran@edu.vn',        'password' => Hash::make('password'), 'role' => 'admin',   'avatar' => null, 'is_active' => true,  'created_at' => now(), 'updated_at' => now()],
 
             // Teachers (ID 3-7)

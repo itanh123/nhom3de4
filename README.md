@@ -64,3 +64,22 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+
+lệnh tạo project 
+composer create-project "laravel/laravel:^10.0" leson2
+php artisan make:(file cần tạo ) (tên file)
+php artisan migrate   (chạy tạo bảng)
+php artisan migrate:fresh   (vừa chạy vừa khởi động lại)
+php artisan db:seed (chạy all seeder)
+php artisan db:seed --class=(tên seeder)
+php artisan migrate --seed (vừa chạy bảng vừa chạy đữ liệu)
+php artisan migrate:reset (xóa bảng)
+php artisan migrate:fresh --seed (xóa toàn bộ bảng chạy lại toàn bộ migration seed lại dữ liệu nếu có seeder)
+
+composer require laravel/breeze --dev (tải thư viện)
+
+npm i
+npm run build
+php artisan storage:link && ls -l public/storage && ls -l storage/app/public/image_products (td tạo đường đẫn tới ảnh đạng /storage/... )
