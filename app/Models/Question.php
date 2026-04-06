@@ -11,6 +11,14 @@ class Question extends Model
 {
     use HasFactory;
 
+    public const TYPE_SINGLE_CHOICE = 'single_choice';
+    public const TYPE_MULTIPLE_CHOICE = 'multiple_choice';
+    public const TYPE_FILL_IN_BLANK = 'fill_in_blank';
+
+    public const DIFFICULTY_EASY = 'easy';
+    public const DIFFICULTY_MEDIUM = 'medium';
+    public const DIFFICULTY_HARD = 'hard';
+
     protected $fillable = [
         'topic_id',
         'created_by',
@@ -27,14 +35,6 @@ class Question extends Model
         'ai_generated' => 'boolean',
         'is_active' => 'boolean',
     ];
-
-    public const TYPE_SINGLE_CHOICE = 'single_choice';
-    public const TYPE_MULTIPLE_CHOICE = 'multiple_choice';
-    public const TYPE_FILL_IN_BLANK = 'fill_in_blank';
-
-    public const DIFFICULTY_EASY = 'easy';
-    public const DIFFICULTY_MEDIUM = 'medium';
-    public const DIFFICULTY_HARD = 'hard';
 
     public function topic(): BelongsTo
     {

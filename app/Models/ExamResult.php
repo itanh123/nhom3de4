@@ -11,6 +11,8 @@ class ExamResult extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'exam_id',
         'student_id',
