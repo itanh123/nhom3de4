@@ -1,0 +1,19 @@
+--- C├íc cß║Ñu h├¼nh AI trong CSDL ---
+- ID: 1 | openai/gpt-4o-mini | Purpose: question_generation | Active: 1
+- ID: 2 | openai/gpt-4o-mini | Purpose: answer_explanation | Active: 1
+- ID: 3 | openai/gpt-4o-mini | Purpose: result_evaluation | Active: 1
+
+--- Thß╗¡ gß╗ìi AI (Tß║ío 1 c├óu hß╗Åi test) ---
+Kß║┐t quß║ú API:
+Array
+(
+    [error] => OpenAI API error: {
+    "error": {
+        "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+        "type": "insufficient_quota",
+        "param": null,
+        "code": "insufficient_quota"
+    }
+}
+
+)

@@ -34,6 +34,9 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
         });
+
+        // Explicit model binding: {import} -> ImportHistory
+        Route::model('import', \App\Models\ImportHistory::class);
     }
 
     /**

@@ -31,7 +31,7 @@
             <p class="text-xs text-slate-400 mt-3">Quản lý chủ đề bài thi</p>
         </a>
 
-        <a href="#" class="group bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg hover:border-purple-300 transition-all duration-300">
+        <a href="{{ route('questions.index') }}" class="group bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg hover:border-purple-300 transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500 mb-1">Câu hỏi</p>
@@ -44,7 +44,7 @@
             <p class="text-xs text-slate-400 mt-3">Ngân hàng câu hỏi</p>
         </a>
 
-        <a href="#" class="group bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg hover:border-orange-300 transition-all duration-300">
+        <a href="{{ route('exams.index') }}" class="group bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-lg hover:border-orange-300 transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500 mb-1">Bài thi</p>

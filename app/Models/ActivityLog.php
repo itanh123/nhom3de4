@@ -38,6 +38,10 @@ class ActivityLog extends Model
     public const ACTION_CREATE_QUESTION = 'create_question';
     public const ACTION_IMPORT_QUESTIONS = 'import_questions';
     public const ACTION_TAKE_EXAM = 'take_exam';
+    public const ACTION_AI_GENERATE_QUESTIONS = 'ai_generate_questions';
+    public const ACTION_AI_EXPLAIN_ANSWER = 'ai_explain_answer';
+    public const ACTION_AI_EVALUATE_RESULT = 'ai_evaluate_result';
+    public const ACTION_AI_GENERATE_LEARNING_PATH = 'ai_generate_learning_path';
 
     public static function actions(): array
     {
@@ -53,6 +57,10 @@ class ActivityLog extends Model
             self::ACTION_CREATE_QUESTION,
             self::ACTION_IMPORT_QUESTIONS,
             self::ACTION_TAKE_EXAM,
+            self::ACTION_AI_GENERATE_QUESTIONS,
+            self::ACTION_AI_EXPLAIN_ANSWER,
+            self::ACTION_AI_EVALUATE_RESULT,
+            self::ACTION_AI_GENERATE_LEARNING_PATH,
         ];
     }
 

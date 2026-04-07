@@ -5,10 +5,21 @@
 @section('content')
 <div class="mb-6 flex justify-between items-center">
     <h1 class="text-2xl font-bold text-slate-800">Quản lý Câu hỏi</h1>
-    <a href="{{ route('questions.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2">
-        <span class="material-symbols-outlined text-lg">add</span>
-        Thêm câu hỏi
-    </a>
+    <div class="flex gap-3">
+        @php
+            $hasAiConfig = \App\Models\AiConfig::active()->byPurpose(\App\Models\AiConfig::PURPOSE_QUESTION_GENERATION)->exists();
+        @endphp
+        @if($hasAiConfig)
+        <a href="{{ route('questions.generate-ai.form') }}" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center gap-2 shadow-sm">
+            <span class="material-symbols-outlined text-lg">auto_awesome</span>
+            Tạo bằng AI
+        </a>
+        @endif
+        <a href="{{ route('questions.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">add</span>
+            Thêm câu hỏi
+        </a>
+    </div>
 </div>
 
 <!-- Filters -->

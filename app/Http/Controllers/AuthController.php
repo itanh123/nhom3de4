@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -24,7 +25,16 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+            ActivityLogger::login();
+            
+            $user = Auth::user();
+            if ($user->role === 'admin') {
+                return redirect()->intended('/admin');
+            }
+            if ($user->role === 'teacher') {
+                return redirect()->intended('/exams');
+            }
+            return redirect()->intended('/student/exams');
         }
 
         return back()->withErrors([
@@ -45,18 +55,22 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => User::ROLE_STUDENT,
         ]);
 
+        // Log registration with the new user's ID (user is not yet logged in)
+        ActivityLogger::log('register', 'user', $user->id, 'Đăng ký tài khoản mới');
+
         return redirect()->route('login')->with('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
     }
 
     public function logout(Request $request)
     {
+        ActivityLogger::logout();
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

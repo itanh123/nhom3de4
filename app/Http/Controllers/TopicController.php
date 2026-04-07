@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Topic;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,11 +27,13 @@ class TopicController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        Topic::create([
+        $topic = Topic::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'created_by' => Auth::id(),
         ]);
+
+        ActivityLogger::createTopic($topic);
 
         return redirect()->route('topics.index')->with('success', 'Chủ đề đã được tạo thành công.');
     }
@@ -48,12 +51,14 @@ class TopicController extends Controller
         ]);
 
         $topic->update($validated);
+        ActivityLogger::updateTopic($topic);
 
         return redirect()->route('topics.index')->with('success', 'Chủ đề đã được cập nhật.');
     }
 
     public function destroy(Topic $topic)
     {
+        ActivityLogger::deleteTopic($topic);
         $topic->delete();
         return redirect()->route('topics.index')->with('success', 'Chủ đề đã được xóa.');
     }

@@ -1,0 +1,20 @@
+hp(81): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#14 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Object(Closure), Object(Closure))
+#15 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Container/Container.php(662): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Object(Closure), Array, NULL)
+#16 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Support/ServiceProvider.php(119): Illuminate/Container/Container->call(Object(Closure))
+#17 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1062): Illuminate/Support/ServiceProvider->callBootedCallbacks()
+#18 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1040): Illuminate/Foundation/Application->bootProvider(Object(App/Providers/RouteServiceProvider))
+#19 [internal function]: Illuminate/Foundation/Application->Illuminate/Foundation/{closure}(Object(App/Providers/RouteServiceProvider), 23)
+#20 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1039): array_walk(Array, Object(Closure))
+#21 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/BootProviders.php(17): Illuminate/Foundation/Application->boot()
+#22 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(286): Illuminate/Foundation/Bootstrap/BootProviders->bootstrap(Object(Illuminate/Foundation/Application))
+#23 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(186): Illuminate/Foundation/Application->bootstrapWith(Array)
+#24 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(170): Illuminate/Foundation/Http/Kernel->bootstrap()
+#25 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#26 E:/laragon/www/nhom3de4/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#27 E:/laragon/www/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('E://laragon//www//...')
+#28 {main}
+"} 
+[2026-04-06 21:40:05] local.ERROR: DeepSeek API Error {"status":402,"body":{"error":{"message":"Insufficient Balance","type":"unknown_error","param":null,"code":"invalid_request_error"}}} 
+[2026-04-06 21:58:09] local.ERROR: OpenRouter API Error {"status":404,"body":{"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct.","code":404},"user_id":"user_33k6GcYdqBTeCMP5YrhLVxyhKYF"}} 
+[2026-04-06 21:58:09] local.WARNING: OpenRouter failed, attempting Groq fallback {"error":"OpenRouter API lỗi: No endpoints found for mistralai/mistral-7b-instruct."} 
