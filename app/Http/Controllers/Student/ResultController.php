@@ -32,6 +32,26 @@ class ResultController extends Controller
         return view('student.results.show', compact('result'));
     }
 
+    public function rateAi(ExamResult $result, Request $request)
+    {
+        if ($result->student_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+        ]);
+
+        $result->update(['ai_rating' => $validated['rating']]);
+
+        if ($validated['rating'] > 4) {
+            $questionIds = $result->exam->examQuestions()->pluck('question_id');
+            \App\Models\Question::whereIn('id', $questionIds)->update(['is_active' => true]);
+        }
+
+        return back()->with('success', 'Cảm ơn bạn đã đánh giá! ' . ($validated['rating'] > 4 ? 'Các câu hỏi này đã được đưa vào hệ thống chung.' : ''));
+    }
+
     public function generateExplanation(ExamResult $result, Request $request)
     {
         if ($result->student_id !== Auth::id() && !optional(Auth::user())->isAdmin() && !optional(Auth::user())->isTeacher()) {

@@ -275,12 +275,7 @@ class QuestionController extends Controller
             return back()->withInput()->withErrors(['error' => $result['error']]);
         }
 
-        $content = $result['content'];
-        $questionsData = $this->parseAiQuestions($content);
-
-        if (empty($questionsData)) {
-            return back()->withInput()->withErrors(['error' => 'Không thể phân tích câu hỏi từ phản hồi AI.']);
-        }
+        $questionsData = $result['content'];
 
         $request->session()->put('ai_questions_preview', [
             'questions' => $questionsData,
@@ -367,93 +362,7 @@ class QuestionController extends Controller
         }
     }
 
-    protected function parseAiQuestions(string $content): array
-    {
-        $content = trim($content);
-
-        if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
-            $content = $matches[1];
-        } elseif (preg_match('/```\s*(.*?)\s*```/s', $content, $matches)) {
-            $content = $matches[1];
-        }
-
-        $content = preg_replace('/^[a-zA-Z]+:\s*/m', '', $content);
-        $content = trim($content);
-
-        $data = json_decode($content, true);
-
-        if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
-            return $this->normalizeParsedQuestions($data);
-        }
-
-        return $this->parseTextBasedQuestions($content);
-    }
-
-    protected function normalizeParsedQuestions(array $data): array
-    {
-        $questions = [];
-
-        foreach ($data as $item) {
-            if (!isset($item['content']) || !isset($item['answers'])) {
-                continue;
-            }
-
-            $answers = [];
-            foreach ($item['answers'] as $ans) {
-                $answers[] = [
-                    'option_text' => $ans['option_text'] ?? $ans['text'] ?? '',
-                    'is_correct' => $ans['is_correct'] ?? $ans['correct'] ?? false,
-                ];
-            }
-
-            if (count($answers) < 2) {
-                continue;
-            }
-
-            $questions[] = [
-                'content' => trim($item['content']),
-                'answers' => $answers,
-            ];
-        }
-
-        return $questions;
-    }
-
-    protected function parseTextBasedQuestions(string $content): array
-    {
-        $questions = [];
-        $blocks = preg_split('/\n(?=\d+\.|\-|\*\*)/', $content);
-
-        foreach ($blocks as $block) {
-            $block = trim($block);
-            if (empty($block)) continue;
-
-            if (preg_match('/^\d+\.\s*(.+)/', $block, $qMatch)) {
-                $questionContent = trim($qMatch[1]);
-                $answers = [];
-
-                if (preg_match_all('/([A-D])\.\s*(.+?)(?=\n[A-D]\.|\n$|$)/is', $block, $ansMatches, PREG_SET_ORDER)) {
-                    foreach ($ansMatches as $m) {
-                        $isCorrect = preg_match('/\*/', $m[2]) || preg_match('/\(đúng\)|\(correct\)/i', $m[2]);
-                        $text = preg_replace('/[\*\(\)đúng\s\(\)correct]+/', '', $m[2]);
-                        $answers[] = [
-                            'option_text' => trim($m[1] . '. ' . $text),
-                            'is_correct' => $isCorrect,
-                        ];
-                    }
-                }
-
-                if (count($answers) >= 2) {
-                    $questions[] = [
-                        'content' => $questionContent,
-                        'answers' => $answers,
-                    ];
-                }
-            }
-        }
-
-        return $questions;
-    }
+    // parser functions moved to AiService
 
     private function validateAnswers(Request $request)
     {

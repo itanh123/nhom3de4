@@ -10,6 +10,8 @@ class ExamQuestion extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'exam_id',
         'question_id',

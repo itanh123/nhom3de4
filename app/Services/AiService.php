@@ -23,7 +23,19 @@ class AiService
     protected function callAi(AiConfig $config, string $prompt): array
     {
         try {
-            $apiKey = decrypt($config->api_key);
+            $apiKey = '';
+            if (!empty($config->api_key)) {
+                try {
+                    $apiKey = decrypt($config->api_key);
+                } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                    $apiKey = $config->api_key; // Fallback to raw string if manually seeded/inserted
+                }
+            }
+
+            if (empty($apiKey)) {
+                return ['error' => "API Key cho cấu hình '{$config->provider}' bị trống."];
+            }
+
             $provider = $config->provider;
             $model = $config->model_name;
             $temperature = (float) ($config->temperature ?? 0.7);
@@ -308,19 +320,144 @@ class AiService
         // Try the configured AI first
         $result = $this->callAi($config, $prompt);
 
-        // If error, try fallback with ENV variables
         if (isset($result['error'])) {
+            // DEMO FALLBACK: If no API key is available, generate mock questions for testing purposes
+            if (empty(env('OPENROUTER_API_KEY')) && empty(env('GROQ_API_KEY'))) {
+                $requestedNum = (int)$payload['number'];
+                $mockData = [];
+                
+                $templates = [
+                    "Theo mock data, đâu là khái niệm cốt lõi số {id} của framework Laravel?",
+                    "Trong lập trình PHP, làm sao để thực thi nghiệp vụ số {id} này?",
+                    "Để tối ưu hoá ứng dụng, phương pháp số {id} nào hiệu quả nhất?",
+                    "Chức năng nào đại diện cho quy trình số {id} trong kiến trúc MVC?"
+                ];
+
+                for ($i = 0; $i < $requestedNum; $i++) {
+                    $template = $templates[$i % count($templates)];
+                    $content = str_replace('{id}', $i + 1, $template);
+
+                    $mockData[] = [
+                        'content' => "[DEMO] " . $content,
+                        'answers' => [
+                            ['option_text' => 'Phương án đúng (Đáp án A)', 'is_correct' => true],
+                            ['option_text' => 'Phương án sai (Đáp án B)', 'is_correct' => false],
+                            ['option_text' => 'Phương án sai (Đáp án C)', 'is_correct' => false],
+                            ['option_text' => 'Phương án sai (Đáp án D)', 'is_correct' => false]
+                        ]
+                    ];
+                }
+                
+                return ['content' => $mockData];
+            }
+
             Log::warning('AI Config failed, trying fallback', [
                 'purpose' => AiConfig::PURPOSE_QUESTION_GENERATION,
                 'error' => $result['error'],
             ]);
             $fallback = $this->directApiCall($prompt);
             if (!isset($fallback['error'])) {
+                $result = $fallback;
+            } else {
                 return $fallback;
             }
         }
 
-        return $result;
+        $parsedQuestions = $this->parseAiQuestions($result['content']);
+
+        if (empty($parsedQuestions)) {
+            return ['error' => 'Không thể phân tích câu hỏi từ phản hồi AI.'];
+        }
+
+        return ['content' => $parsedQuestions];
+    }
+
+    public function parseAiQuestions(string $content): array
+    {
+        $content = trim($content);
+
+        if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
+            $content = $matches[1];
+        } elseif (preg_match('/```\s*(.*?)\s*```/s', $content, $matches)) {
+            $content = $matches[1];
+        }
+
+        $content = preg_replace('/^[a-zA-Z]+:\s*/m', '', $content);
+        $content = trim($content);
+
+        $data = json_decode($content, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
+            return $this->normalizeParsedQuestions($data);
+        }
+
+        return $this->parseTextBasedQuestions($content);
+    }
+
+    protected function normalizeParsedQuestions(array $data): array
+    {
+        $questions = [];
+
+        foreach ($data as $item) {
+            if (!isset($item['content']) || !isset($item['answers'])) {
+                continue;
+            }
+
+            $answers = [];
+            foreach ($item['answers'] as $ans) {
+                $answers[] = [
+                    'option_text' => $ans['option_text'] ?? $ans['text'] ?? '',
+                    'is_correct' => $ans['is_correct'] ?? $ans['correct'] ?? false,
+                ];
+            }
+
+            if (count($answers) < 2) {
+                continue;
+            }
+
+            $questions[] = [
+                'content' => trim($item['content']),
+                'answers' => $answers,
+            ];
+        }
+
+        return $questions;
+    }
+
+    protected function parseTextBasedQuestions(string $content): array
+    {
+        $questions = [];
+        $blocks = preg_split('/\n(?=\d+\.|\-|\*\*)/', $content);
+
+        foreach ($blocks as $block) {
+            $block = trim($block);
+            if (empty($block)) continue;
+
+            if (preg_match('/^\d+\.\s*(.+)/', $block, $qMatch)) {
+                $questionContent = trim($qMatch[1]);
+                $answers = [];
+
+                if (preg_match_all('/([A-D])\.\s*(.+?)(?=\n[A-D]\.|\n$|$)/is', $block, $ansMatches, PREG_SET_ORDER)) {
+                    foreach ($ansMatches as $m) {
+                        $isCorrect = preg_match('/\*/', $m[2]) || preg_match('/\(đúng\)|\(correct\)/i', $m[2]);
+                        $text = preg_replace('/[\*\(\)đúng\s\(\)correct]+/', '', $m[2]);
+                        $answers[] = [
+                            'option_text' => trim($m[1] . '. ' . $text),
+                            'is_correct' => $isCorrect,
+                        ];
+                    }
+                }
+
+                if (count($answers) >= 2) {
+                    $questions[] = [
+                        'content' => $questionContent,
+                        'answers' => $answers,
+                    ];
+                }
+            }
+        }
+
+        return $questions;
     }
 
     /**
@@ -487,10 +624,11 @@ class AiService
         // Try OpenRouter first
         $apiKey = env('OPENROUTER_API_KEY');
         if ($apiKey && $apiKey !== 'your-openrouter-api-key-here') {
-            $result = $this->callOpenRouterDirect($apiKey, env('OPENROUTER_MODEL', 'mistralai/mistral-7b-instruct'), $message);
+            $result = $this->callOpenRouterDirect($apiKey, env('OPENROUTER_MODEL', 'openai/gpt-3.5-turbo'), $message);
             if ($result['success']) {
                 return $result;
             }
+            return ['error' => $result['error']]; // return actual error so we know what happened
         }
 
         // Try Groq fallback
@@ -500,6 +638,7 @@ class AiService
             if ($result['success']) {
                 return $result;
             }
+            return ['error' => $result['error']];
         }
 
         return ['error' => 'Không có API key nào được cấu hình.'];

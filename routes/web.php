@@ -55,6 +55,10 @@ Route::prefix('student')
     ->name('student.')
     ->middleware(['auth', 'role:student'])
     ->group(function () {
+        // AI Generator
+        Route::get('/exams/ai-generator', [\App\Http\Controllers\Student\AiExamController::class, 'create'])->name('exams.ai-generator');
+        Route::post('/exams/ai-generator', [\App\Http\Controllers\Student\AiExamController::class, 'generate'])->name('exams.ai-generator.submit');
+
         // Exams
         Route::get('/exams', [StudentExamController::class, 'index'])->name('exams.index');
         Route::get('/exams/{exam}', [StudentExamController::class, 'show'])->name('exams.show');
@@ -65,6 +69,7 @@ Route::prefix('student')
         // Results
         Route::get('/results', [StudentResultController::class, 'index'])->name('results.index');
         Route::get('/results/{result}', [StudentResultController::class, 'show'])->name('results.show');
+        Route::post('/results/{result}/rate-ai', [StudentResultController::class, 'rateAi'])->name('results.rate-ai');
         Route::post('/results/{result}/ai-explain', [StudentResultController::class, 'generateExplanation'])->name('results.ai-explain');
         Route::post('/results/{result}/ai-learning-path', [StudentResultController::class, 'generateLearningPath'])->name('results.ai-learning-path');
     });

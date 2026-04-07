@@ -13,6 +13,15 @@
                 @endif
             </div>
         </div>
+        @if($errors->any())
+        <div class="alert alert-danger mb-4 shadow-sm">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
         <form action="{{ route('student.exams.submit', $exam) }}" method="POST" id="examForm">
             @csrf
             <input type="hidden" name="exam_id" value="{{ $exam->id }}">
@@ -27,7 +36,7 @@
                             @if($question->type === 'single_choice')
                             <div class="d-grid gap-2">
                                 @foreach($question->answers as $answer)
-                                <label class="d-flex align-items-center gap-3 p-3 bg-light rounded" style="cursor:pointer"><input type="radio" name="answers[{{ $question->id }}][answer_id]" value="{{ $answer->id }}" class="form-check-input" required><span>{{ $answer->option_text }}</span></label>
+                                <label class="d-flex align-items-center gap-3 p-3 bg-light rounded" style="cursor:pointer"><input type="radio" name="answers[{{ $question->id }}][answer_id]" value="{{ $answer->id }}" class="form-check-input"><span>{{ $answer->option_text }}</span></label>
                                 @endforeach
                             </div>
                             @elseif($question->type === 'multiple_choice')
@@ -37,7 +46,7 @@
                                 @endforeach
                             </div><small class="text-muted mt-2 d-block">* Chọn tất cả đáp án đúng</small>
                             @else
-                            <input type="text" name="answers[{{ $question->id }}][text]" class="form-control" placeholder="Nhập câu trả lời..." required>
+                            <input type="text" name="answers[{{ $question->id }}][text]" class="form-control" placeholder="Nhập câu trả lời...">
                             @endif
                         </div>
                     </div>
@@ -51,22 +60,36 @@
 @endsection
 
 @if($exam->duration_mins && isset($sessionData['expires_at']))
-@section('scripts')
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const expiresAt = new Date('{{ $sessionData["expires_at"] }}').getTime();
+    let remainingSeconds = Math.max(0, {{ \Carbon\Carbon::parse($sessionData['expires_at'])->getTimestamp() - time() }});
     const el = document.getElementById('countdown');
     const form = document.getElementById('examForm');
+    
     function tick() {
-        const dist = expiresAt - Date.now();
-        if (dist < 0) { el.textContent = 'Hết giờ!'; form.submit(); return; }
-        const m = Math.floor((dist % 3600000) / 60000);
-        const s = Math.floor((dist % 60000) / 1000);
+        if (remainingSeconds <= 0) { 
+            el.textContent = 'Hết giờ!'; 
+            form.submit(); 
+            return; 
+        }
+        
+        const m = Math.floor(remainingSeconds / 60);
+        const s = remainingSeconds % 60;
         el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+        remainingSeconds--;
+        setTimeout(tick, 1000);
     }
-    tick(); setInterval(tick, 1000);
-    document.getElementById('submitBtn').addEventListener('click', function(e) { if (!confirm('Bạn có chắc muốn nộp bài?')) e.preventDefault(); });
+    
+    setTimeout(tick, 1000);
+    tick(); // Run immediately for first render
+    
+    document.getElementById('submitBtn').addEventListener('click', function(e) { 
+        if (!confirm('Bạn có chắc muốn nộp bài? Khuyến cáo: Các câu chưa trả lời sẽ không có điểm.')) {
+            e.preventDefault(); 
+        }
+    });
 });
 </script>
-@endsection
+@endpush
 @endif

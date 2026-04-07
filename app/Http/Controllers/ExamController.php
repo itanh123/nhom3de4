@@ -231,7 +231,14 @@ class ExamController extends Controller
             abort(403, 'Bạn không có quyền thay đổi trạng thái bài thi này.');
         }
 
-        $exam->update(['is_published' => !$exam->is_published]);
+        $updates = ['is_published' => !$exam->is_published];
+
+        // Nếu chuyển sang công khai và đang ở trạng thái nháp -> tự động chuyển thành Mở
+        if ($updates['is_published'] && $exam->status === Exam::STATUS_DRAFT) {
+            $updates['status'] = Exam::STATUS_OPEN;
+        }
+
+        $exam->update($updates);
 
         return back()->with('success', $exam->is_published ? 'Bài thi đã được công bố!' : 'Bài thi đã được ẩn!');
     }

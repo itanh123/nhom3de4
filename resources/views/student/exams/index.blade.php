@@ -3,7 +3,12 @@
 @section('title', 'Danh sách Bài thi')
 
 @section('content')
-<div class="mb-4"><h2><i class="bi bi-journal-text me-2"></i>Danh sách Bài thi</h2></div>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <h2 class="mb-0"><i class="bi bi-journal-text me-2"></i>Danh sách Bài thi</h2>
+    <a href="{{ route('student.exams.ai-generator') }}" class="btn btn-info fw-bold text-white shadow-sm">
+        <i class="bi bi-stars me-1"></i>Luyện tập với AI
+    </a>
+</div>
 @if(session('success'))<div class="alert alert-success d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i>{{ session('success') }}</div>@endif
 @if(session('error'))<div class="alert alert-danger d-flex align-items-center gap-2"><i class="bi bi-exclamation-circle-fill"></i>{{ session('error') }}</div>@endif
 @if($exams->isEmpty())

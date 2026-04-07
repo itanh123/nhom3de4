@@ -104,7 +104,11 @@ class Exam extends Model
 
     public function canTake(): bool
     {
-        if (! $this->is_published || ! $this->is_active) {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        if (! $this->is_published && $this->created_by !== auth()->id()) {
             return false;
         }
 

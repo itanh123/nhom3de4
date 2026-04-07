@@ -27,6 +27,28 @@
         </div>
     </div>
 </div>
+@if($result->exam && $result->exam->created_by == auth()->id())
+    @if(is_null($result->ai_rating))
+        <div class="card shadow-sm border-warning mb-4">
+            <div class="card-body text-center bg-warning bg-opacity-10 rounded">
+                <h5 class="fw-bold text-warning-emphasis"><i class="bi bi-star-fill text-warning me-2"></i>Đánh giá đề luyện tập AI</h5>
+                <form action="{{ route('student.results.rate-ai', $result) }}" method="POST" class="d-flex gap-2 justify-content-center flex-wrap">
+                    @csrf
+                    <button type="submit" name="rating" value="1" class="btn btn-outline-warning text-dark"><i class="bi bi-star-fill"></i> 1</button>
+                    <button type="submit" name="rating" value="2" class="btn btn-outline-warning text-dark"><i class="bi bi-star-fill"></i> 2</button>
+                    <button type="submit" name="rating" value="3" class="btn btn-outline-warning text-dark"><i class="bi bi-star-fill"></i> 3</button>
+                    <button type="submit" name="rating" value="4" class="btn btn-outline-warning text-dark"><i class="bi bi-star-fill"></i> 4</button>
+                    <button type="submit" name="rating" value="5" class="btn btn-warning text-dark fw-bold"><i class="bi bi-star-fill"></i> Tuyệt đỉnh (5 sao)</button>
+                </form>
+            </div>
+        </div>
+    @else
+        <div class="alert alert-info text-center fw-bold shadow-sm">
+            <i class="bi bi-stars"></i> Bạn đã chấm {{ $result->ai_rating }} sao cho đề AI này. 
+            @if($result->ai_rating == 5) Hệ thống cảm ơn bạn đã đóng góp các câu hỏi hay vào ngân hàng chung! @endif
+        </div>
+    @endif
+@endif
 <h5 class="fw-bold mb-3">Chi tiết câu trả lời</h5>
 @php $qNum = 1; @endphp
 @foreach($result->examAnswers as $answer)

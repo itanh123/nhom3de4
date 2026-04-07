@@ -10,6 +10,8 @@ class Answer extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'question_id',
         'option_text',
