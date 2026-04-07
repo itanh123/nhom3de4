@@ -215,3 +215,34 @@ Route::middleware(['auth', 'role:admin,teacher'])->group(function () {
         Route::get('/{import}', [ImportController::class, 'show'])->name('show');
     });
 });
+
+// =====================
+// ROUTE QUẢN TRỊ (Admin Routes) - CẦN ĐĂNG NHẬP VÀ CÓ ROLE ADMIN
+// =====================
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', 'role:admin'])
+    ->group(function () {
+        // Dashboard (trang chính)
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+
+        // Quản lý Roles
+        Route::get('/roles', [RoleManagementController::class, 'index'])->name('roles.index');
+        Route::patch('/roles/{user}', [RoleManagementController::class, 'update'])->name('roles.update');
+
+        // Quản lý Users
+        Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
+        Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+
+        // Quản lý Topics
+        Route::get('/topics', [TopicManagementController::class, 'index'])->name('topics.index');
+        Route::post('/topics', [TopicManagementController::class, 'store'])->name('topics.store');
+        Route::put('/topics/{topic}', [TopicManagementController::class, 'update'])->name('topics.update');
+        Route::delete('/topics/{topic}', [TopicManagementController::class, 'destroy'])->name('topics.destroy');
+
+        // Báo cáo
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    });
