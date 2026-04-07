@@ -85,11 +85,26 @@
         </div>
 
         <ul class="nav flex-column">
+            @if(auth()->user()?->role === 'admin')
             <li class="nav-item">
                 <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard*') ? 'active' : '' }}">
-                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
                 </a>
             </li>
+            @endif
+
+            @if(auth()->user()?->role === 'student')
+            <li class="nav-item">
+                <a href="{{ route('student.exams.index') }}" class="nav-link {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
+                    <i class="bi bi-journal-text me-2"></i>Bài thi
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('student.results.index') }}" class="nav-link {{ request()->routeIs('student.results.*') ? 'active' : '' }}">
+                    <i class="bi bi-clipboard-data me-2"></i>Kết quả học tập
+                </a>
+            </li>
+            @endif
             
             @if(auth()->user()?->role === 'admin')
                 <li class="nav-item">
@@ -117,12 +132,12 @@
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('exams.index') }}" class="nav-link {{ request()->routeIs('exams.*') ? 'active' : '' }}">
-                        <i class="bi bi-file-earmark-text me-2"></i>Bài thi
+                        <i class="bi bi-file-earmark-text me-2"></i>Quản lý Bài thi
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('results.index') }}" class="nav-link {{ request()->routeIs('results.*') ? 'active' : '' }}">
-                        <i class="bi bi-clipboard-check me-2"></i>Kết quả
+                        <i class="bi bi-clipboard-check me-2"></i>Kết quả học sinh
                     </a>
                 </li>
             @endif
