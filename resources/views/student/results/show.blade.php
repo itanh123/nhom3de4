@@ -76,10 +76,12 @@
                         <p class="fw-medium mb-0">{{ $answer->text_answer ?: 'Không trả lời' }}</p>
                     </div>
                 @endif
-                @if($result->exam?->show_explain && $question->explanation)
-                <div class="mt-3 p-3 bg-info bg-opacity-10 border border-info rounded">
-                    <small class="fw-bold text-info"><i class="bi bi-info-circle me-1"></i>Giải thích:</small>
-                    <p class="mb-0">{{ $question->explanation }}</p>
+                @if($question->explanation && ($result->exam?->show_explain || $question->ai_generated))
+                <div class="mt-3 p-3 bg-info bg-opacity-10 border border-info border-start-4 rounded-end">
+                    <div class="d-flex align-items-center mb-1">
+                        <small class="fw-bold text-info"><i class="bi bi-info-circle-fill me-1"></i>Giải thích từ Quiz Lumina AI:</small>
+                    </div>
+                    <p class="mb-0 text-dark-emphasis small italic">{{ $question->explanation }}</p>
                 </div>
                 @endif
             </div>

@@ -6,8 +6,11 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-question-circle me-2"></i>Quản lý Câu hỏi</h2>
     <div class="d-flex gap-2">
-        @php $hasAiConfig = \App\Models\AiConfig::active()->byPurpose(\App\Models\AiConfig::PURPOSE_QUESTION_GENERATION)->exists(); @endphp
-        @if($hasAiConfig)
+        @php 
+            $hasAiConfig = \App\Models\AiConfig::active()->byPurpose(\App\Models\AiConfig::PURPOSE_QUESTION_GENERATION)->exists();
+            $hasEnvConfig = !empty(env('OPENROUTER_API_KEY')) || !empty(env('GROQ_API_KEY'));
+        @endphp
+        @if($hasAiConfig || $hasEnvConfig)
         <a href="{{ route('questions.generate-ai.form') }}" class="btn btn-outline-primary"><i class="bi bi-stars me-1"></i>Tạo bằng AI</a>
         @endif
         <a href="{{ route('questions.create') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Thêm câu hỏi</a>
@@ -33,8 +36,17 @@
                 </thead>
                 <tbody>
                     @forelse($questions as $question)
-                    <tr>
-                        <td class="ps-3"><div class="small">{{ Str::limit($question->content, 80) }}</div><small class="text-muted">Bởi: {{ $question->creator?->name ?? 'N/A' }}</small></td>
+                        <td class="ps-3">
+                            <div class="small fw-medium">{{ Str::limit($question->content, 80) }}</div>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <small class="text-muted">Bởi: {{ $question->creator?->name ?? 'N/A' }}</small>
+                                @if($question->explanation)
+                                    <span class="badge bg-info bg-opacity-10 text-info border border-info px-2 py-1" style="font-size: 0.65rem;" title="{{ $question->explanation }}">
+                                        <i class="bi bi-info-circle me-1"></i>Có giải thích
+                                    </span>
+                                @endif
+                            </div>
+                        </td>
                         <td class="text-center">
                             @if($question->type == 'single_choice') <span class="badge bg-primary">Một lựa chọn</span>
                             @elseif($question->type == 'multiple_choice') <span class="badge bg-info">Nhiều lựa chọn</span>

@@ -299,7 +299,22 @@ class AiService
         $config = $this->getActiveConfig(AiConfig::PURPOSE_QUESTION_GENERATION);
 
         if (!$config) {
-            return ['error' => 'Chưa có cấu hình AI active cho mục đích tạo câu hỏi. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+            // Fallback to direct API call if no DB config is active
+            Log::info('No active DB config for question generation, falling back to direct API call.');
+            // We need to build the prompt before calling directApiCall
+            $prompt = "Tạo {$payload['number']} câu hỏi trắc nghiệm về chủ đề: {$payload['topic']}.\n";
+            $prompt .= "Loại: {$payload['type']}, Độ khó: {$payload['difficulty']}.\n";
+            if (!empty($payload['prompt'])) $prompt .= "Yêu cầu bổ sung: {$payload['prompt']}\n";
+            if (!empty($payload['document'])) $prompt .= "\nNội dung tài liệu tham khảo:\n" . substr($payload['document'], 0, 5000) . "\n";
+            $prompt .= "\nTrả về JSON array, mỗi phần tử có format:\n";
+            $prompt .= '[{"content": "Nội dung câu hỏi", "explanation": "Giải thích ngắn gọn tại sao đáp án đúng là đúng (tối đa 200 ký tự)", "answers": [{"option_text": "Đáp án A", "is_correct": false}, ...]}]';
+            
+            $result = $this->directApiCall($prompt);
+            if (isset($result['error'])) return $result;
+            
+            $parsedQuestions = $this->parseAiQuestions($result['content']);
+            if (empty($parsedQuestions)) return ['error' => 'Không thể phân tích câu hỏi từ phản hồi AI.'];
+            return ['content' => $parsedQuestions];
         }
 
         // Build prompt
@@ -315,7 +330,7 @@ class AiService
         }
 
         $prompt .= "\nTrả về JSON array, mỗi phần tử có format:\n";
-        $prompt .= '[{"content": "Nội dung câu hỏi", "answers": [{"option_text": "Đáp án A", "is_correct": false}, ...]}]';
+        $prompt .= '[{"content": "Nội dung câu hỏi", "explanation": "Giải thích ngắn gọn tại sao đáp án đúng là đúng (tối đa 200 ký tự)", "answers": [{"option_text": "Đáp án A", "is_correct": false}, ...]}]';
 
         // Try the configured AI first
         $result = $this->callAi($config, $prompt);
@@ -376,20 +391,31 @@ class AiService
     {
         $content = trim($content);
 
+        // More robust JSON extraction: find the first '[' and last ']'
+        $firstBracket = strpos($content, '[');
+        $lastBracket = strrpos($content, ']');
+
+        if ($firstBracket !== false && $lastBracket !== false && $lastBracket > $firstBracket) {
+            $jsonContent = substr($content, $firstBracket, $lastBracket - $firstBracket + 1);
+            $data = json_decode($jsonContent, true);
+            
+            if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
+                return $this->normalizeParsedQuestions($data);
+            }
+        }
+
+        // Fallback for markdown-wrapped JSON if above simple check fails for some reason
         if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
-            $content = $matches[1];
-        } elseif (preg_match('/```\s*(.*?)\s*```/s', $content, $matches)) {
-            $content = $matches[1];
+            $data = json_decode(trim($matches[1]), true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
+                return $this->normalizeParsedQuestions($data);
+            }
         }
 
-        $content = preg_replace('/^[a-zA-Z]+:\s*/m', '', $content);
-        $content = trim($content);
-
-        $data = json_decode($content, true);
-
-        if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
-            return $this->normalizeParsedQuestions($data);
-        }
+        Log::error('Failed to parse AI JSON', [
+            'content_start' => substr($content, 0, 500),
+            'json_error' => json_last_error_msg()
+        ]);
 
         return $this->parseTextBasedQuestions($content);
     }
@@ -399,15 +425,19 @@ class AiService
         $questions = [];
 
         foreach ($data as $item) {
-            if (!isset($item['content']) || !isset($item['answers'])) {
+            // Flexible content key checking
+            $content = $item['content'] ?? $item['question'] ?? $item['text'] ?? null;
+            $answersData = $item['answers'] ?? $item['options'] ?? $item['choices'] ?? null;
+
+            if (!$content || !$answersData || !is_array($answersData)) {
                 continue;
             }
 
             $answers = [];
-            foreach ($item['answers'] as $ans) {
+            foreach ($answersData as $ans) {
                 $answers[] = [
-                    'option_text' => $ans['option_text'] ?? $ans['text'] ?? '',
-                    'is_correct' => $ans['is_correct'] ?? $ans['correct'] ?? false,
+                    'option_text' => $ans['option_text'] ?? $ans['text'] ?? $ans['option'] ?? $ans['value'] ?? '',
+                    'is_correct' => $ans['is_correct'] ?? $ans['correct'] ?? $ans['isCorrect'] ?? false,
                 ];
             }
 
@@ -415,8 +445,11 @@ class AiService
                 continue;
             }
 
+            $explanation = $item['explanation'] ?? $item['explain'] ?? $item['reason'] ?? '';
+
             $questions[] = [
-                'content' => trim($item['content']),
+                'content' => trim($content),
+                'explanation' => trim($explanation),
                 'answers' => $answers,
             ];
         }
@@ -468,7 +501,17 @@ class AiService
         $config = $this->getActiveConfig(AiConfig::PURPOSE_RESULT_EVALUATION);
 
         if (!$config) {
-            return ['error' => 'Chưa có cấu hình AI active cho đánh giá kết quả. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+            Log::info('No active DB config for result evaluation, falling back to direct API call.');
+            $prompt = "Đánh giá kết quả thi của học sinh:\n";
+            $prompt .= "Tên: {$payload['student_name']}\n";
+            $prompt .= "Bài thi: {$payload['exam_title']} (Chủ đề: {$payload['topic_name']})\n";
+            $prompt .= "Điểm: {$payload['score_pct']}% ({$payload['correct_count']}/{$payload['total_questions']} đúng)\n";
+            $prompt .= "Kết quả: " . ($payload['passed'] ? 'Đạt' : 'Không đạt') . "\n";
+            if (!empty($payload['weak_topics'])) $prompt .= "Chủ đề yếu: " . implode(', ', $payload['weak_topics']) . "\n";
+            if (!empty($payload['strong_topics'])) $prompt .= "Chủ đề mạnh: " . implode(', ', $payload['strong_topics']) . "\n";
+            $prompt .= "\nTrả về JSON:\n{\"summary\": \"Nhận xét tổng quát\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"], \"suggestions\": [\"...\"]}";
+            
+            return $this->directApiCall($prompt);
         }
 
         $prompt = "Đánh giá kết quả thi của học sinh:\n";
@@ -510,7 +553,15 @@ class AiService
         $config = $this->getActiveConfig(AiConfig::PURPOSE_ANSWER_EXPLANATION);
 
         if (!$config) {
-            return ['error' => 'Chưa có cấu hình AI active cho giải thích đáp án. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+            Log::info('No active DB config for answer explanation, falling back to direct API call.');
+            $prompt = "Giải thích chi tiết cho câu hỏi trắc nghiệm:\n";
+            $prompt .= "Câu hỏi: {$payload['question']}\n";
+            $prompt .= "Đáp án đúng: {$payload['correct_answer']}\n";
+            $prompt .= "Câu trả lời của học sinh: {$payload['student_answer']}\n";
+            $prompt .= "Kết quả: " . ($payload['is_correct'] ? 'Đúng' : 'Sai') . "\n\n";
+            $prompt .= "Hãy giải thích tại sao đáp án đúng là đúng và giúp học sinh hiểu rõ hơn.";
+            
+            return $this->directApiCall($prompt);
         }
 
         $prompt = "Giải thích chi tiết cho câu hỏi trắc nghiệm:\n";
@@ -544,7 +595,16 @@ class AiService
         $config = $this->getActiveConfig(AiConfig::PURPOSE_LEARNING_PATH);
 
         if (!$config) {
-            return ['error' => 'Chưa có cấu hình AI active cho lộ trình học tập. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+            Log::info('No active DB config for learning path, falling back to direct API call.');
+            $prompt = "Tạo lộ trình học tập cho học sinh:\n";
+            $prompt .= "Tên: {$payload['student_name']}\n";
+            $prompt .= "Bài thi: {$payload['exam_title']} (Chủ đề: {$payload['topic_name']})\n";
+            $prompt .= "Điểm: {$payload['score_pct']}%\n";
+            if (!empty($payload['weak_topics'])) $prompt .= "Chủ đề cần cải thiện: " . implode(', ', $payload['weak_topics']) . "\n";
+            $prompt .= "\nTrả về JSON:\n";
+            $prompt .= '{"overall_goal": "Mục tiêu tổng", "weekly_plan": [{"week": 1, "focus": "Nội dung", "activities": ["..."], "estimated_time": "..."}], "recommended_resources": ["..."], "tips": ["..."]}';
+            
+            return $this->directApiCall($prompt);
         }
 
         $prompt = "Tạo lộ trình học tập cho học sinh:\n";
@@ -624,11 +684,34 @@ class AiService
         // Try OpenRouter first
         $apiKey = env('OPENROUTER_API_KEY');
         if ($apiKey && $apiKey !== 'your-openrouter-api-key-here') {
-            $result = $this->callOpenRouterDirect($apiKey, env('OPENROUTER_MODEL', 'openai/gpt-3.5-turbo'), $message);
-            if ($result['success']) {
-                return $result;
+            // Priority list of FREE models on OpenRouter
+            $models = array_unique(array_filter([
+                env('OPENROUTER_MODEL'),
+                'meta-llama/llama-3.1-8b-instruct:free',
+                'mistralai/mistral-7b-instruct:free',
+                'google/gemini-2.0-flash-lite-001',
+                'deepseek/deepseek-chat:free'
+            ]));
+
+            $lastError = '';
+            foreach ($models as $model) {
+                Log::info("Trying OpenRouter direct call with model: {$model}");
+                $result = $this->callOpenRouterDirect($apiKey, $model, $message);
+                if ($result['success']) {
+                    return $result;
+                }
+                
+                $lastError = $result['error'];
+                Log::warning("OpenRouter model {$model} failed: {$lastError}");
+                
+                // If it's a 404/400 (model not found/invalid), try the next one in the list
+                if (!str_contains($lastError, '404') && !str_contains($lastError, '400') && !str_contains($lastError, 'valid model ID')) {
+                    // If it's a 401 (Auth) or other serious error, don't waste time retrying with other models
+                    break;
+                }
             }
-            return ['error' => $result['error']]; // return actual error so we know what happened
+            
+            return ['error' => "OpenRouter failed after retrying multiple models. Last error: {$lastError}"];
         }
 
         // Try Groq fallback

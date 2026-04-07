@@ -78,16 +78,34 @@
                 <textarea name="default_prompt" class="form-control" rows="3">{{ old('default_prompt', $aiConfig->default_prompt) }}</textarea>
             </div>
 
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="is_active_edit" value="1" {{ old('is_active', $aiConfig->is_active) ? 'checked' : '' }}>
+                    <label class="form-check-label fw-bold" for="is_active_edit">Kích hoạt cấu hình này</label>
+                </div>
+                <small class="text-muted d-block mt-1">Ghi chú: Nếu bật, các cấu hình khác cùng mục đích sẽ tự động bị tắt.</small>
+            </div>
+
+            <div class="alert alert-info border-0 bg-light-primary mb-4">
+                <h6 class="fw-bold"><i class="bi bi-lightbulb me-2"></i>Gợi ý Model MIỄN PHÍ (OpenRouter)</h6>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setModel('google/gemini-2.0-flash-lite-preview-02-05:free')">Gemini 2.0 Flash Lite (Free)</button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setModel('mistralai/mistral-7b-instruct:free')">Mistral 7B (Free)</button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setModel('deepseek/deepseek-chat:free')">DeepSeek Chat (Free)</button>
+                </div>
+                <script>
+                    function setModel(name) {
+                        document.querySelector('input[name="model_name"]').value = name;
+                        document.querySelector('select[name="provider"]').value = 'openrouter';
+                    }
+                </script>
+            </div>
+
             <div class="d-flex justify-content-between">
                 <div>
-                    @if($aiConfig->is_active)
-                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Đang Active</span>
-                    @else
-                        <span class="badge bg-secondary">Inactive</span>
-                    @endif
                 </div>
                 <div class="d-grid gap-2 d-md-flex">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary px-4">
                         <i class="bi bi-save me-2"></i>Lưu thay đổi
                     </button>
                 </div>

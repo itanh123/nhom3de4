@@ -47,7 +47,14 @@ class AiConfigController extends Controller
             'temperature' => 'nullable|numeric|min:0|max:2',
             'max_tokens' => 'nullable|integer|min:100|max:100000',
             'default_prompt' => 'nullable|string|max:1000',
+            'is_active' => 'nullable|boolean',
         ]);
+
+        $isActive = $request->boolean('is_active', false);
+
+        if ($isActive) {
+            AiConfig::where('purpose', $request->purpose)->update(['is_active' => false]);
+        }
 
         $config = AiConfig::create([
             'provider' => $request->provider,
@@ -58,7 +65,7 @@ class AiConfigController extends Controller
             'temperature' => $request->temperature ?? 0.7,
             'max_tokens' => $request->max_tokens ?? 2000,
             'default_prompt' => $request->default_prompt,
-            'is_active' => false,
+            'is_active' => $isActive,
             'created_by' => auth()->id(),
         ]);
 
@@ -90,7 +97,14 @@ class AiConfigController extends Controller
             'temperature' => 'nullable|numeric|min:0|max:2',
             'max_tokens' => 'nullable|integer|min:100|max:100000',
             'default_prompt' => 'nullable|string|max:1000',
+            'is_active' => 'nullable|boolean',
         ]);
+
+        $isActive = $request->boolean('is_active');
+
+        if ($isActive) {
+            AiConfig::where('purpose', $request->purpose)->where('id', '!=', $aiConfig->id)->update(['is_active' => false]);
+        }
 
         $data = $request->only(['provider', 'model_name', 'purpose', 'base_url', 'temperature', 'max_tokens', 'default_prompt']);
 
@@ -98,6 +112,7 @@ class AiConfigController extends Controller
             $data['api_key'] = encrypt($request->api_key);
         }
 
+        $data['is_active'] = $isActive;
         $data['updated_by'] = auth()->id();
         $aiConfig->update($data);
 

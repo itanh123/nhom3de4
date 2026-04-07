@@ -23,8 +23,8 @@
         </div>
         @endif
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-4">
+        <div class="card shadow border-0 glass-card animate-up">
+            <div class="card-body p-5">
                 <p class="text-muted mb-4">Chọn chủ đề và cấu hình để AI thiết kế cho bạn một đề quiz hoàn toàn mới. Hệ thống sẽ tự động cấu trúc bài làm và căn thời gian hợp lý (2 phút/câu).</p>
                 <form action="{{ route('student.exams.ai-generator.submit') }}" method="POST" id="aiForm">
                     @csrf
@@ -72,12 +72,15 @@
                 </form>
 
                 <!-- Loading state -->
-                <div id="loadingState" class="text-center py-5 d-none">
-                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <div id="loadingState" class="text-center py-5 d-none animate-up">
+                    <div class="spinner-grow text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <h5 class="fw-bold text-primary">AI đang thiết kế đề thi...</h5>
-                    <p class="text-muted mb-0">Quá trình này có thể mất từ 10 - 20 giây tuỳ thuộc vào độ dài nội dung. Vui lòng không đóng trang.</p>
+                    <h4 class="fw-bold text-primary mb-3">Quiz Lumina AI đang thiết kế bài thi...</h4>
+                    <p class="text-muted fs-5 mb-0">Chúng tôi đang chọn lọc những câu hỏi hay nhất dành cho bạn.</p>
+                    <div class="progress mt-4 mx-auto" style="height: 6px; width: 200px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    </div>
                 </div>
             </div>
         </div>

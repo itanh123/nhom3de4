@@ -333,6 +333,7 @@ class QuestionController extends Controller
                     'type' => $data['type'],
                     'difficulty' => $data['difficulty'],
                     'content' => $qData['content'],
+                    'explanation' => $qData['explanation'] ?? null,
                     'ai_generated' => true,
                     'is_active' => true,
                 ]);

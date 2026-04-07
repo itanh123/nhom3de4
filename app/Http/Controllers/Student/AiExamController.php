@@ -61,7 +61,8 @@ class AiExamController extends Controller
                 'topic_id' => $topic->id,
                 'created_by' => Auth::id(), // Student created and owns this exam
                 'duration_mins' => $validated['number'] * 2, // 2 minutes per question roughly
-                'pass_mark_pct' => 50,
+                'pass_score' => 50,
+                'show_explain' => true, 
                 'status' => Exam::STATUS_OPEN, // Ready to take
                 'is_published' => false, // Private! Only creator can see it
                 'is_active' => true,
@@ -91,6 +92,7 @@ class AiExamController extends Controller
                     'type' => Question::TYPE_SINGLE_CHOICE,
                     'difficulty' => $validated['difficulty'],
                     'content' => $qData['content'],
+                    'explanation' => $qData['explanation'] ?? null,
                     'ai_generated' => true,
                     'is_active' => false, // Hidden from global bank until 5-star rating
                 ]);

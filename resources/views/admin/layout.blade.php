@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Lumina Quiz Admin' }}</title>
+    <title>{{ $title ?? 'Quiz Lumina' }}</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,64 +14,144 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --sidebar-bg: #0f172a;
+            --content-bg: #f8fafc;
+        }
+
         * {
             font-family: 'Inter', sans-serif;
         }
+
         body {
-            background-color: #f3f4f6;
+            background-color: var(--content-bg);
+            overflow-x: hidden;
         }
+
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
-            width: 250px;
-            background: #1e293b;
+            width: 260px;
+            background: var(--sidebar-bg);
             color: white;
-            padding-top: 1rem;
+            padding-top: 1.5rem;
             z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
         }
+
         .sidebar .nav-link {
             color: #94a3b8;
-            padding: 0.75rem 1rem;
-            margin: 0.25rem 0.5rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
+            padding: 0.8rem 1.2rem;
+            margin: 0.2rem 0.8rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
         }
+
         .sidebar .nav-link:hover {
-            background: #334155;
+            background: rgba(255,255,255,0.05);
             color: white;
+            transform: translateX(5px);
         }
+
         .sidebar .nav-link.active {
-            background: #4f46e5;
+            background: var(--primary-gradient);
             color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
+
         .sidebar .nav-link i {
             width: 24px;
+            font-size: 1.2rem;
         }
+
         .main-content {
-            margin-left: {{ auth()->check() ? '250px' : '0' }};
+            margin-left: {{ auth()->check() ? '260px' : '0' }};
             min-height: 100vh;
-        }
-        .top-bar {
             background: white;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
+            transition: margin 0.3s ease;
         }
+
+        .top-bar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1.25rem 2rem;
+            border-bottom: 
+            1px solid #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
         .content-area {
-            padding: 1.5rem;
+            padding: 2.5rem;
+            animation: slideInUp 0.6s ease-out;
         }
+
         .brand-text {
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: #4f46e5;
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
-        .sidebar-section-title {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            padding: 1rem 1rem 0.5rem;
+
+        /* Animations */
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        .animate-up { animation: slideInUp 0.5s ease-out; }
+        
+        .card {
+            border: none;
+            border-radius: 1.25rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.03);
+            filter: brightness(1.1);
+        }
+
+        .btn-pulse {
+            animation: pulse-glow 2s infinite;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
     </style>
     @stack('styles')
@@ -80,7 +160,7 @@
     @auth
     <nav class="sidebar">
         <div class="px-3 mb-4">
-            <h1 class="brand-text">Quiz Admin</h1>
+            <h1 class="brand-text">Quiz Lumina</h1>
             <small class="text-muted">{{ auth()->user()->role === 'admin' ? 'Quản trị viên' : (auth()->user()->role === 'teacher' ? 'Giáo viên' : 'Học sinh') }}</small>
         </div>
 
@@ -95,8 +175,13 @@
 
             @if(auth()->user()?->role === 'student')
             <li class="nav-item">
-                <a href="{{ route('student.exams.index') }}" class="nav-link {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
+                <a href="{{ route('student.exams.index') }}" class="nav-link {{ request()->routeIs('student.exams.index') ? 'active' : '' }}">
                     <i class="bi bi-journal-text me-2"></i>Bài thi
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('student.exams.ai-generator') }}" class="nav-link {{ request()->routeIs('student.exams.ai-generator') ? 'active' : '' }}">
+                    <i class="bi bi-stars me-2 text-warning"></i>Luyện tập AI
                 </a>
             </li>
             <li class="nav-item">
@@ -213,6 +298,18 @@
             @if (session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
