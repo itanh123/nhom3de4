@@ -34,9 +34,9 @@ class AiService
             $apiKey = '';
             if (!empty($config->api_key)) {
                 try {
-                    $apiKey = decrypt($config->api_key);
+                    $apiKey = trim(decrypt($config->api_key));
                 } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-                    $apiKey = $config->api_key; // Fallback to raw string if manually seeded/inserted
+                    $apiKey = trim($config->api_key); // Fallback to raw string if manually seeded/inserted
                 }
             }
 
@@ -359,43 +359,13 @@ class AiService
             $prompt .= "\nNội dung tài liệu tham khảo:\n" . substr($payload['document'], 0, 5000) . "\n";
         }
 
-        $prompt .= "\nTrả về JSON array, mỗi phần tử có format:\n";
-        $prompt .= '[{"content": "Nội dung câu hỏi", "explanation": "Giải thích ngắn gọn tại sao đáp án đúng là đúng (tối đa 200 ký tự)", "answers": [{"option_text": "Đáp án A", "is_correct": false}, ...]}]';
+        $prompt .= "\nYêu cầu quan trọng: CHỈ trả về một mã JSON Array hợp lệ. KHÔNG có văn bản giải thích, KHÔNG có markdown ```json nếu có thể. Nếu không thể, hãy đảm bảo định dạng JSON là chính xác.\n";
+        $prompt .= 'Mẫu định dạng: [{"content": "Nội dung câu hỏi", "explanation": "Giải thích tại sao đáp án đúng là đúng", "answers": [{"option_text": "Đáp án A", "is_correct": false}, ...]}]';
 
         // Try the configured AI first
         $result = $this->callAi($config, $prompt);
 
         if (isset($result['error'])) {
-            // DEMO FALLBACK: If no API key is available, generate mock questions for testing purposes
-            if (empty(env('OPENROUTER_API_KEY')) && empty(env('GROQ_API_KEY'))) {
-                $requestedNum = (int)$payload['number'];
-                $mockData = [];
-                
-                $templates = [
-                    "Theo mock data, đâu là khái niệm cốt lõi số {id} của framework Laravel?",
-                    "Trong lập trình PHP, làm sao để thực thi nghiệp vụ số {id} này?",
-                    "Để tối ưu hoá ứng dụng, phương pháp số {id} nào hiệu quả nhất?",
-                    "Chức năng nào đại diện cho quy trình số {id} trong kiến trúc MVC?"
-                ];
-
-                for ($i = 0; $i < $requestedNum; $i++) {
-                    $template = $templates[$i % count($templates)];
-                    $content = str_replace('{id}', $i + 1, $template);
-
-                    $mockData[] = [
-                        'content' => "[DEMO] " . $content,
-                        'answers' => [
-                            ['option_text' => 'Phương án đúng (Đáp án A)', 'is_correct' => true],
-                            ['option_text' => 'Phương án sai (Đáp án B)', 'is_correct' => false],
-                            ['option_text' => 'Phương án sai (Đáp án C)', 'is_correct' => false],
-                            ['option_text' => 'Phương án sai (Đáp án D)', 'is_correct' => false]
-                        ]
-                    ];
-                }
-                
-                return ['content' => $mockData];
-            }
-
             Log::warning('AI Config failed, trying fallback', [
                 'purpose' => AiConfig::PURPOSE_QUESTION_GENERATION,
                 'error' => $result['error'],
@@ -408,11 +378,16 @@ class AiService
             }
         }
 
+        if (!isset($result['content']) || !is_string($result['content'])) {
+            return ['error' => 'Phản hồi từ AI không hợp lệ hoặc bị trống.'];
+        }
+
         // result['content'] is a string from AI here
         $parsedQuestions = $this->parseAiQuestions($result['content']);
 
         if (empty($parsedQuestions)) {
-            return ['error' => 'Không thể phân tích câu hỏi từ phản hồi AI.'];
+            Log::error('Failed to parse AI Questions', ['raw_content' => $result['content']]);
+            return ['error' => 'Không thể phân tích câu hỏi từ phản hồi AI. Vui lòng thử lại.'];
         }
 
         return ['content' => $parsedQuestions];
@@ -422,7 +397,8 @@ class AiService
     {
         $content = trim($content);
 
-        // More robust JSON extraction: find the first '[' and last ']'
+        // Remove potentially leading/trailing text before/after JSON array
+        // Find the first '[' and last ']'
         $firstBracket = strpos($content, '[');
         $lastBracket = strrpos($content, ']');
 
@@ -435,8 +411,8 @@ class AiService
             }
         }
 
-        // Fallback for markdown-wrapped JSON if above simple check fails for some reason
-        if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
+        // Fallback for markdown-wrapped JSON
+        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $content, $matches)) {
             $data = json_decode(trim($matches[1]), true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
                 return $this->normalizeParsedQuestions($data);
@@ -444,7 +420,7 @@ class AiService
         }
 
         Log::error('Failed to parse AI JSON', [
-            'content_start' => substr($content, 0, 500),
+            'content_snippet' => substr($content, 0, 500),
             'json_error' => json_last_error_msg()
         ]);
 
@@ -739,7 +715,7 @@ class AiService
      */
     protected function directApiCall(string $message): array
     {
-        $apiKey = env('OPENROUTER_API_KEY');
+        $apiKey = trim(env('OPENROUTER_API_KEY', ''));
         $model = env('OPENROUTER_MODEL', 'meta-llama/llama-3.1-8b-instruct:free');
         
         if (!$apiKey || $apiKey === 'your-openrouter-api-key-here') {
