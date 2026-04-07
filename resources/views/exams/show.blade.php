@@ -3,144 +3,72 @@
 @section('title', 'Chi tiết Bài thi')
 
 @section('content')
-<div class="mb-6 flex justify-between items-center">
-    <h1 class="text-2xl font-bold text-slate-800">Chi tiết Bài thi</h1>
-    <div class="flex gap-2">
-        <a href="{{ route('exams.edit', $exam) }}" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined text-lg">edit</span>
-            Sửa
-        </a>
-        <a href="{{ route('exams.index') }}" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined text-lg">arrow_back</span>
-            Quay lại
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-file-earmark-text me-2"></i>Chi tiết Bài thi</h2>
+    <div class="btn-group">
+        <a href="{{ route('exams.edit', $exam) }}" class="btn btn-warning"><i class="bi bi-pencil me-1"></i>Sửa</a>
+        <a href="{{ route('exams.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Quay lại</a>
     </div>
 </div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Main Content -->
-    <div class="lg:col-span-2 space-y-6">
-        <!-- Exam Info -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-6">
-            <div class="flex items-start justify-between mb-4">
-                <h3 class="font-semibold text-slate-800 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-blue-600">assignment</span>
-                    {{ $exam->title }}
-                </h3>
-                @switch($exam->status)
-                    @case('draft')
-                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">Nháp</span>
-                        @break
-                    @case('scheduled')
-                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Đã lên lịch</span>
-                        @break
-                    @case('open')
-                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Mở</span>
-                        @break
-                    @case('closed')
-                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Đóng</span>
-                        @break
-                    @case('archived')
-                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Lưu trữ</span>
-                        @break
-                @endswitch
-            </div>
-            
-            @if($exam->description)
-            <p class="text-slate-600 mb-4">{{ $exam->description }}</p>
-            @endif
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="p-3 bg-slate-50 rounded-xl">
-                    <p class="text-xs text-slate-500">Chủ đề</p>
-                    <p class="font-semibold text-slate-800">{{ $exam->topic?->name ?? 'N/A' }}</p>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h4 class="fw-bold">{{ $exam->title }}</h4>
+                    @switch($exam->status)
+                        @case('draft') <span class="badge bg-secondary">Nháp</span> @break
+                        @case('scheduled') <span class="badge bg-warning text-dark">Đã lên lịch</span> @break
+                        @case('open') <span class="badge bg-success">Mở</span> @break
+                        @case('closed') <span class="badge bg-danger">Đóng</span> @break
+                        @case('archived') <span class="badge bg-dark">Lưu trữ</span> @break
+                    @endswitch
                 </div>
-                <div class="p-3 bg-slate-50 rounded-xl">
-                    <p class="text-xs text-slate-500">Thời gian</p>
-                    <p class="font-semibold text-slate-800">{{ $exam->duration_mins ?? 'N/A' }} phút</p>
-                </div>
-                <div class="p-3 bg-slate-50 rounded-xl">
-                    <p class="text-xs text-slate-500">Điểm đạt</p>
-                    <p class="font-semibold text-slate-800">{{ $exam->pass_score }}%</p>
-                </div>
-                <div class="p-3 bg-slate-50 rounded-xl">
-                    <p class="text-xs text-slate-500">Câu hỏi</p>
-                    <p class="font-semibold text-slate-800">{{ $exam->examQuestions->count() }}</p>
+                @if($exam->description)<p class="text-muted mb-3">{{ $exam->description }}</p>@endif
+                <div class="row g-3">
+                    <div class="col-6 col-md-3"><div class="bg-light rounded p-3"><small class="text-muted d-block">Chủ đề</small><strong>{{ $exam->topic?->name ?? 'N/A' }}</strong></div></div>
+                    <div class="col-6 col-md-3"><div class="bg-light rounded p-3"><small class="text-muted d-block">Thời gian</small><strong>{{ $exam->duration_mins ?? 'N/A' }} phút</strong></div></div>
+                    <div class="col-6 col-md-3"><div class="bg-light rounded p-3"><small class="text-muted d-block">Điểm đạt</small><strong>{{ $exam->pass_score }}%</strong></div></div>
+                    <div class="col-6 col-md-3"><div class="bg-light rounded p-3"><small class="text-muted d-block">Câu hỏi</small><strong>{{ $exam->examQuestions->count() }}</strong></div></div>
                 </div>
             </div>
         </div>
-
-        <!-- Schedule Info -->
         @if($exam->start_time || $exam->end_time)
-        <div class="bg-white border border-slate-200 rounded-2xl p-6">
-            <h3 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <span class="material-symbols-outlined text-purple-600">schedule</span>
-                Lịch thi
-            </h3>
-            <div class="grid grid-cols-2 gap-4">
-                @if($exam->start_time)
-                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                    <p class="text-xs text-yellow-700">Bắt đầu</p>
-                    <p class="font-semibold text-yellow-900">{{ $exam->start_time->format('d/m/Y H:i') }}</p>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><h6 class="mb-0 fw-bold"><i class="bi bi-calendar-event text-primary me-2"></i>Lịch thi</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @if($exam->start_time)<div class="col-md-6"><div class="alert alert-warning mb-0"><small>Bắt đầu</small><br><strong>{{ $exam->start_time->format('d/m/Y H:i') }}</strong></div></div>@endif
+                    @if($exam->end_time)<div class="col-md-6"><div class="alert alert-danger mb-0"><small>Kết thúc</small><br><strong>{{ $exam->end_time->format('d/m/Y H:i') }}</strong></div></div>@endif
                 </div>
-                @endif
-                @if($exam->end_time)
-                <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
-                    <p class="text-xs text-red-700">Kết thúc</p>
-                    <p class="font-semibold text-red-900">{{ $exam->end_time->format('d/m/Y H:i') }}</p>
-                </div>
-                @endif
             </div>
         </div>
         @endif
-
-        <!-- Questions List -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-6">
-            <h3 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <span class="material-symbols-outlined text-emerald-600">quiz</span>
-                Danh sách câu hỏi ({{ $exam->examQuestions->count() }})
-            </h3>
-
-            <div class="space-y-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><h6 class="mb-0 fw-bold"><i class="bi bi-list-check text-success me-2"></i>Danh sách câu hỏi ({{ $exam->examQuestions->count() }})</h6></div>
+            <div class="card-body">
                 @foreach($exam->examQuestions->sortBy('display_order') as $index => $eq)
-                <div class="p-4 bg-slate-50 rounded-xl">
-                    <div class="flex items-start gap-3 mb-3">
-                        <span class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-                            {{ $index + 1 }}
-                        </span>
-                        <div class="flex-1">
-                            <p class="text-slate-800 font-medium">{{ Str::limit($eq->question->content, 150) }}</p>
-                            <div class="flex items-center gap-2 mt-2">
-                                @if($eq->question->type == 'single_choice')
-                                    <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Một lựa chọn</span>
-                                @elseif($eq->question->type == 'multiple_choice')
-                                    <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Nhiều lựa chọn</span>
-                                @else
-                                    <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">Điền trống</span>
-                                @endif
-                                <span class="px-2 py-0.5 rounded text-xs {{ $eq->question->difficulty === 'easy' ? 'bg-green-100 text-green-700' : ($eq->question->difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">
-                                    {{ ucfirst($eq->question->difficulty) }}
-                                </span>
-                                <span class="text-xs text-slate-500">{{ $eq->point }} điểm</span>
+                <div class="p-3 bg-light rounded mb-3">
+                    <div class="d-flex gap-3 mb-2">
+                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;">{{ $index + 1 }}</span>
+                        <div class="flex-grow-1">
+                            <div class="fw-medium">{{ Str::limit($eq->question->content, 150) }}</div>
+                            <div class="mt-1">
+                                @if($eq->question->type == 'single_choice') <span class="badge bg-primary">Một lựa chọn</span>
+                                @elseif($eq->question->type == 'multiple_choice') <span class="badge bg-info">Nhiều lựa chọn</span>
+                                @else <span class="badge bg-success">Điền trống</span> @endif
+                                <span class="badge bg-{{ $eq->question->difficulty === 'easy' ? 'success' : ($eq->question->difficulty === 'medium' ? 'warning text-dark' : 'danger') }}">{{ ucfirst($eq->question->difficulty) }}</span>
+                                <small class="text-muted ms-1">{{ $eq->point }} điểm</small>
                             </div>
                         </div>
                     </div>
-                    
                     @if($eq->question->answers && $eq->question->answers->count() > 0)
-                    <div class="ml-11 space-y-2">
+                    <div class="ms-5">
                         @foreach($eq->question->answers->sortBy('display_order') as $ansIndex => $answer)
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="w-6 h-6 rounded-full {{ $answer->is_correct ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600' }} flex items-center justify-center text-xs font-medium">
-                                {{ chr(65 + $ansIndex) }}
-                            </span>
-                            <span class="{{ $answer->is_correct ? 'text-emerald-700 font-medium' : 'text-slate-600' }}">
-                                {{ $answer->option_text }}
-                            </span>
-                            @if($answer->is_correct)
-                            <span class="text-emerald-600">
-                                <span class="material-symbols-outlined text-base">check_circle</span>
-                            </span>
-                            @endif
+                        <div class="d-flex align-items-center gap-2 small py-1">
+                            <span class="badge {{ $answer->is_correct ? 'bg-success' : 'bg-secondary' }} rounded-circle" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;">{{ chr(65 + $ansIndex) }}</span>
+                            <span class="{{ $answer->is_correct ? 'text-success fw-medium' : '' }}">{{ $answer->option_text }}</span>
+                            @if($answer->is_correct)<i class="bi bi-check-circle-fill text-success ms-1"></i>@endif
                         </div>
                         @endforeach
                     </div>
@@ -150,55 +78,31 @@
             </div>
         </div>
     </div>
-
-    <!-- Sidebar -->
-    <div class="space-y-6">
-        <div class="bg-white border border-slate-200 rounded-2xl p-6">
-            <h3 class="font-semibold text-slate-800 mb-4">Thông tin</h3>
-            <div class="space-y-4 text-sm">
-                <div>
-                    <p class="text-slate-500">Người tạo</p>
-                    <p class="font-medium text-slate-800">{{ $exam->creator?->name ?? 'N/A' }}</p>
-                </div>
-                <div>
-                    <p class="text-slate-500">Ngày tạo</p>
-                    <p class="font-medium text-slate-800">{{ $exam->created_at->format('d/m/Y H:i') }}</p>
-                </div>
-                <div>
-                    <p class="text-slate-500">Cập nhật</p>
-                    <p class="font-medium text-slate-800">{{ $exam->updated_at->format('d/m/Y H:i') }}</p>
-                </div>
-                <div>
-                    <p class="text-slate-500">Hiển thị</p>
-                    <p class="font-medium">
-                        @if($exam->shuffle_q)
-                            <span class="text-emerald-600">Xáo trộn câu hỏi</span>
-                        @else
-                            <span class="text-slate-400">Theo thứ tự</span>
-                        @endif
-                    </p>
-                </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Thông tin</h6></div>
+            <div class="card-body small">
+                <p><span class="text-muted">Người tạo</span><br><strong>{{ $exam->creator?->name ?? 'N/A' }}</strong></p>
+                <p><span class="text-muted">Ngày tạo</span><br><strong>{{ $exam->created_at->format('d/m/Y H:i') }}</strong></p>
+                <p><span class="text-muted">Cập nhật</span><br><strong>{{ $exam->updated_at->format('d/m/Y H:i') }}</strong></p>
+                <p class="mb-0"><span class="text-muted">Hiển thị</span><br>
+                    @if($exam->shuffle_q) <span class="text-success">Xáo trộn câu hỏi</span>
+                    @else <span class="text-muted">Theo thứ tự</span> @endif
+                </p>
             </div>
         </div>
-
-        <div class="bg-white border border-slate-200 rounded-2xl p-6">
-            <h3 class="font-semibold text-slate-800 mb-4">Thao tác</h3>
-            <div class="space-y-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Thao tác</h6></div>
+            <div class="card-body d-grid gap-2">
                 <form action="{{ route('exams.togglePublish', $exam) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="w-full px-4 py-2.5 {{ $exam->is_published ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }} rounded-xl transition-colors font-medium flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-lg">{{ $exam->is_published ? 'visibility_off' : 'visibility' }}</span>
-                        {{ $exam->is_published ? 'Ẩn bài thi' : 'Công khai' }}
+                    @csrf @method('PATCH')
+                    <button type="submit" class="btn w-100 {{ $exam->is_published ? 'btn-outline-warning' : 'btn-outline-success' }}">
+                        <i class="bi bi-{{ $exam->is_published ? 'eye-slash' : 'eye' }} me-1"></i>{{ $exam->is_published ? 'Ẩn bài thi' : 'Công khai' }}
                     </button>
                 </form>
-                <form action="{{ route('exams.destroy', $exam) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa bài thi này?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="w-full px-4 py-2.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-xl transition-colors font-medium flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-lg">delete</span>
-                        Xóa bài thi
-                    </button>
+                <form action="{{ route('exams.destroy', $exam) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa?')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-trash me-1"></i>Xóa bài thi</button>
                 </form>
             </div>
         </div>
