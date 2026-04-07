@@ -15,113 +15,101 @@ class AnswersTableSeeder extends Seeder
         // Seed đúng 20 answer records (5 câu × 4 đáp án = 20, lấy câu 1-5).
 
         DB::table('answers')->insert([
-            // Q1: Biến PHP bắt đầu bằng ký tự nào? (single_choice, easy)
+            // Q1: Biến PHP bắt đầu bằng ký tự nào?
             ['question_id' => 1, 'option_text' => '$',  'is_correct' => true,  'display_order' => 1],
             ['question_id' => 1, 'option_text' => '@',  'is_correct' => false, 'display_order' => 2],
             ['question_id' => 1, 'option_text' => '#',  'is_correct' => false, 'display_order' => 3],
             ['question_id' => 1, 'option_text' => '&',  'is_correct' => false, 'display_order' => 4],
 
-            // Q2: Hàm in ra màn hình trong PHP? (single_choice, easy)
+            // Q2: Hàm in ra màn hình trong PHP?
             ['question_id' => 2, 'option_text' => 'echo',    'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 2, 'option_text' => 'console.log()', 'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 2, 'option_text' => 'printf()', 'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 2, 'option_text' => 'print_r()', 'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 2, 'option_text' => 'scanf()',  'is_correct' => false, 'display_order' => 3],
             ['question_id' => 2, 'option_text' => 'write()',  'is_correct' => false, 'display_order' => 4],
 
-            // Q3: Kiểu nguyên thủy trong PHP? (multiple_choice, medium) — 2 đáp án đúng
-            ['question_id' => 3, 'option_text' => 'int',    'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 3, 'option_text' => 'string', 'is_correct' => true,  'display_order' => 2],
-            ['question_id' => 3, 'option_text' => 'array',  'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 3, 'option_text' => 'object', 'is_correct' => false, 'display_order' => 4],
+            // Q3: Which is the past tense of "go"?
+            ['question_id' => 3, 'option_text' => 'went',   'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 3, 'option_text' => 'gone',   'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 3, 'option_text' => 'goed',   'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 3, 'option_text' => 'goes',   'is_correct' => false, 'display_order' => 4],
 
-            // Q5: Lệnh Artisan tạo Controller? (single_choice, easy)
-            ['question_id' => 5, 'option_text' => 'php artisan make:controller', 'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 5, 'option_text' => 'php artisan create:controller', 'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 5, 'option_text' => 'php artisan generate:controller', 'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 5, 'option_text' => 'php artisan new:controller', 'is_correct' => false, 'display_order' => 4],
+            // Q4: Where are you from?
+            ['question_id' => 4, 'option_text' => 'Where',  'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 4, 'option_text' => 'What',   'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 4, 'option_text' => 'When',   'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 4, 'option_text' => 'Who',    'is_correct' => false, 'display_order' => 4],
 
-            // Q6: Middleware đăng ký ở file nào? (single_choice, medium)
-            ['question_id' => 6, 'option_text' => 'app/Http/Kernel.php',          'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 6, 'option_text' => 'config/middleware.php',         'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 6, 'option_text' => 'app/Providers/AppServiceProvider.php', 'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 6, 'option_text' => 'routes/web.php',                'is_correct' => false, 'display_order' => 4],
+            // Q5: Đạo hàm x^2
+            ['question_id' => 5, 'option_text' => '2x',     'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 5, 'option_text' => 'x',      'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 5, 'option_text' => 'x^2',    'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 5, 'option_text' => '2',      'is_correct' => false, 'display_order' => 4],
 
-            // Q7: Eloquent firstOrCreate? (single_choice, hard)
-            ['question_id' => 7, 'option_text' => 'firstOrCreate()',  'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 7, 'option_text' => 'findOrCreate()',   'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 7, 'option_text' => 'updateOrCreate()', 'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 7, 'option_text' => 'getOrNew()',       'is_correct' => false, 'display_order' => 4],
+            // Q6: sin(90)
+            ['question_id' => 6, 'option_text' => '1',      'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 6, 'option_text' => '0',      'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 6, 'option_text' => '0.5',    'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 6, 'option_text' => '-1',     'is_correct' => false, 'display_order' => 4],
 
-            // Q8: SELECT * FROM users? (single_choice, easy)
-            ['question_id' => 8, 'option_text' => 'SELECT * FROM users',       'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 8, 'option_text' => 'GET ALL FROM users',        'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 8, 'option_text' => 'FETCH * FROM users',        'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 8, 'option_text' => 'SELECT ALL IN users',       'is_correct' => false, 'display_order' => 4],
+            // Q7: Tuyên ngôn độc lập
+            ['question_id' => 7, 'option_text' => 'Hồ Chí Minh', 'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 7, 'option_text' => 'Võ Nguyên Giáp', 'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 7, 'option_text' => 'Phan Bội Châu', 'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 7, 'option_text' => 'Trần Phú',   'is_correct' => false, 'display_order' => 4],
 
-            // Q9: Dạng chuẩn hóa NF? (multiple_choice, medium) — 3 đúng
-            ['question_id' => 9, 'option_text' => '1NF', 'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 9, 'option_text' => '2NF', 'is_correct' => true,  'display_order' => 2],
-            ['question_id' => 9, 'option_text' => '3NF', 'is_correct' => true,  'display_order' => 3],
-            ['question_id' => 9, 'option_text' => '5NF', 'is_correct' => false, 'display_order' => 4],
+            // Q8: Điện Biên Phủ
+            ['question_id' => 8, 'option_text' => '1954',   'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 8, 'option_text' => '1945',   'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 8, 'option_text' => '1975',   'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 8, 'option_text' => '1930',   'is_correct' => false, 'display_order' => 4],
 
-            // Q10: INNER JOIN vs LEFT JOIN? (single_choice, hard)
-            ['question_id' => 10, 'option_text' => 'INNER JOIN chỉ trả về hàng khớp cả 2 bảng; LEFT JOIN trả về tất cả hàng bảng trái kể cả không khớp bên phải.', 'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 10, 'option_text' => 'Cả hai đều giống nhau, chỉ khác tên gọi.',  'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 10, 'option_text' => 'LEFT JOIN chỉ lấy hàng bảng bên phải.',     'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 10, 'option_text' => 'INNER JOIN trả về tất cả hàng từ cả 2 bảng.', 'is_correct' => false, 'display_order' => 4],
+            // Q9: Tác giả Truyện Kiều
+            ['question_id' => 9, 'option_text' => 'Nguyễn Du',  'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 9, 'option_text' => 'Nguyễn Trãi', 'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 9, 'option_text' => 'Tố Hữu',     'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 9, 'option_text' => 'Xuân Diệu',  'is_correct' => false, 'display_order' => 4],
 
-            // Q11: const trong ES6? (single_choice, easy)
-            ['question_id' => 11, 'option_text' => 'const',  'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 11, 'option_text' => 'let',    'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 11, 'option_text' => 'var',    'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 11, 'option_text' => 'final',  'is_correct' => false, 'display_order' => 4],
+            // Q10: Lão Hạc
+            ['question_id' => 10, 'option_text' => 'Lão Hạc',   'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 10, 'option_text' => 'Ông Giáo',  'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 10, 'option_text' => 'Chị Dậu',   'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 10, 'option_text' => 'Anh Pha',   'is_correct' => false, 'display_order' => 4],
 
-            // Q12: Promise.all vs Promise.race? (single_choice, medium)
-            ['question_id' => 12, 'option_text' => 'Promise.all() chờ tất cả; Promise.race() resolve ngay khi 1 cái xong đầu tiên.', 'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 12, 'option_text' => 'Cả hai đều chờ tất cả promise hoàn thành.',  'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 12, 'option_text' => 'Promise.race() chạy song song, Promise.all() chạy tuần tự.', 'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 12, 'option_text' => 'Promise.all() reject khi 1 cái fail; Promise.race() bỏ qua lỗi.', 'is_correct' => false, 'display_order' => 4],
+            // Q11: Nhiệt độ sôi của nước
+            ['question_id' => 11, 'option_text' => '100°C',    'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 11, 'option_text' => '0°C',      'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 11, 'option_text' => '50°C',     'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 11, 'option_text' => '200°C',    'is_correct' => false, 'display_order' => 4],
 
-            // Q13: git log? (single_choice, easy)
-            ['question_id' => 13, 'option_text' => 'git log',      'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 13, 'option_text' => 'git history',  'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 13, 'option_text' => 'git show',     'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 13, 'option_text' => 'git commits',  'is_correct' => false, 'display_order' => 4],
+            // Q12: v = s / t
+            ['question_id' => 12, 'option_text' => 'v = s / t', 'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 12, 'option_text' => 'v = s * t', 'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 12, 'option_text' => 'v = t / s', 'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 12, 'option_text' => 'v = s + t', 'is_correct' => false, 'display_order' => 4],
 
-            // Q15: Product Owner trong Scrum? (single_choice, easy)
-            ['question_id' => 15, 'option_text' => 'Product Owner',   'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 15, 'option_text' => 'Scrum Master',    'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 15, 'option_text' => 'Development Team','is_correct' => false, 'display_order' => 3],
-            ['question_id' => 15, 'option_text' => 'Stakeholder',     'is_correct' => false, 'display_order' => 4],
+            // Q13: H2O
+            ['question_id' => 13, 'option_text' => 'H2O',       'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 13, 'option_text' => 'CO2',       'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 13, 'option_text' => 'NaCl',      'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 13, 'option_text' => 'O2',        'is_correct' => false, 'display_order' => 4],
 
-            // Q16: Scrum events? (multiple_choice, medium)
-            ['question_id' => 16, 'option_text' => 'Sprint Planning',      'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 16, 'option_text' => 'Daily Scrum',          'is_correct' => true,  'display_order' => 2],
-            ['question_id' => 16, 'option_text' => 'Sprint Review',        'is_correct' => true,  'display_order' => 3],
-            ['question_id' => 16, 'option_text' => 'Backlog Refinement',   'is_correct' => false, 'display_order' => 4],
+            // Q14: Hydro
+            ['question_id' => 14, 'option_text' => 'Hydro',     'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 14, 'option_text' => 'Oxy',       'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 14, 'option_text' => 'Sắt',       'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 14, 'option_text' => 'Vàng',      'is_correct' => false, 'display_order' => 4],
 
-            // Q17: SQL Injection prevention? (single_choice, medium)
-            ['question_id' => 17, 'option_text' => 'Sử dụng Prepared Statements',      'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 17, 'option_text' => 'Chỉ cho phép GET request',         'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 17, 'option_text' => 'Mã hóa password người dùng',       'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 17, 'option_text' => 'Sử dụng HTTPS',                    'is_correct' => false, 'display_order' => 4],
+            // Q15: Merge Sort
+            ['question_id' => 15, 'option_text' => 'Merge Sort',    'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 15, 'option_text' => 'Bubble Sort',   'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 15, 'option_text' => 'Selection Sort','is_correct' => false, 'display_order' => 3],
+            ['question_id' => 15, 'option_text' => 'Insertion Sort','is_correct' => false, 'display_order' => 4],
 
-            // Q18: CSRF? (single_choice, hard)
-            ['question_id' => 18, 'option_text' => 'Lợi dụng session/cookie tự động gửi theo request để thực hiện hành động trái phép.', 'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 18, 'option_text' => 'Chèn script độc hại vào trang web để đánh cắp dữ liệu người dùng khác.',             'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 18, 'option_text' => 'Tấn công bằng cách dò mật khẩu brute force.',                                        'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 18, 'option_text' => 'Giả mạo địa chỉ IP nguồn của packet.',                                               'is_correct' => false, 'display_order' => 4],
-
-            // Q19: O(n log n) sort? (single_choice, medium)
-            ['question_id' => 19, 'option_text' => 'Merge Sort',    'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 19, 'option_text' => 'Bubble Sort',   'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 19, 'option_text' => 'Selection Sort','is_correct' => false, 'display_order' => 3],
-            ['question_id' => 19, 'option_text' => 'Insertion Sort','is_correct' => false, 'display_order' => 4],
-
-            // Q20: BST worst case? (single_choice, hard)
-            ['question_id' => 20, 'option_text' => 'O(n)',       'is_correct' => true,  'display_order' => 1],
-            ['question_id' => 20, 'option_text' => 'O(log n)',   'is_correct' => false, 'display_order' => 2],
-            ['question_id' => 20, 'option_text' => 'O(n log n)', 'is_correct' => false, 'display_order' => 3],
-            ['question_id' => 20, 'option_text' => 'O(1)',       'is_correct' => false, 'display_order' => 4],
+            // Q16: O(log n)
+            ['question_id' => 16, 'option_text' => 'O(log n)',   'is_correct' => true,  'display_order' => 1],
+            ['question_id' => 16, 'option_text' => 'O(n)',       'is_correct' => false, 'display_order' => 2],
+            ['question_id' => 16, 'option_text' => 'O(n^2)',     'is_correct' => false, 'display_order' => 3],
+            ['question_id' => 16, 'option_text' => 'O(1)',       'is_correct' => false, 'display_order' => 4],
         ]);
     }
 }

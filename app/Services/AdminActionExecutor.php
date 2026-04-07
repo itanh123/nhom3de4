@@ -394,11 +394,10 @@ class AdminActionExecutor
             return ['success' => false, 'message' => $result['error']];
         }
 
-        $content = $result['content'];
-        $questionsData = $this->parseAiQuestions($content);
+        $questionsData = $result['content'];
 
         if (empty($questionsData)) {
-            return ['success' => false, 'message' => 'Không thể phân tích câu hỏi từ AI.'];
+            return ['success' => false, 'message' => 'Không thể thu thập câu hỏi từ AI.'];
         }
 
         DB::beginTransaction();

@@ -14,22 +14,27 @@
     <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-body">
-                <form method="POST" action="{{ route('questions.generate-ai') }}" id="aiForm">
+                <form method="POST" action="{{ route('questions.generate-ai') }}" id="aiForm" enctype="multipart/form-data">
                     @csrf
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Chủ đề <span class="text-danger">*</span></label>
                             <select name="topic_id" class="form-select" required>
                                 <option value="">-- Chọn chủ đề --</option>
                                 @foreach($topics as $topic)<option value="{{ $topic->id }}" {{ old('topic_id') == $topic->id ? 'selected' : '' }}>{{ $topic->name }}</option>@endforeach
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Tài liệu tham khảo</label>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tài liệu có sẵn</label>
                             <select name="document_id" class="form-select">
                                 <option value="">-- Không chọn --</option>
                                 @foreach($documents as $doc)<option value="{{ $doc->id }}" {{ old('document_id') == $doc->id ? 'selected' : '' }}>{{ $doc->file_name }}</option>@endforeach
                             </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tải file mới (.txt)</label>
+                            <input type="file" name="reference_file" class="form-control" accept=".txt">
+                            <div class="form-text small">Ưu tiên hơn tài liệu có sẵn</div>
                         </div>
                     </div>
                     <div class="row mb-3">

@@ -123,22 +123,29 @@
                     </div>
                 @endforelse
             </div>
-            <div class="card-footer bg-white">
+            <div class="card-footer bg-white pt-3 border-0">
                 <form action="{{ route('admin.chat.send', $session) }}" method="POST" id="messageForm">
                     @csrf
-                    <div class="input-group">
-                        <textarea name="message" class="form-control" rows="2" 
+                    <div class="position-relative">
+                        <textarea name="message" class="form-control border-0 bg-light p-3 pe-5" rows="2" 
                                   placeholder="Nhập tin nhắn trả lời..." 
+                                  style="border-radius: 1rem; resize: none;"
                                   required maxlength="5000" id="messageInput"></textarea>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send"></i>
+                        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center position-absolute" 
+                                style="bottom: 10px; right: 10px; width: 40px; height: 40px; border-radius: 12px; z-index: 10;">
+                            <i class="bi bi-send-fill fs-5"></i>
                         </button>
                     </div>
-                    <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="includeAi" name="include_ai">
-                        <label class="form-check-label small" for="includeAi">
-                            Kèm phản hồi từ AI
-                        </label>
+                    <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeAi" name="include_ai">
+                            <label class="form-check-label small text-muted" for="includeAi">
+                                <i class="bi bi-robot me-1"></i> Kèm phản hồi từ AI
+                            </label>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.7rem;">
+                            Nhấn <strong>Enter</strong> để gửi, <strong>Shift + Enter</strong> để xuống dòng
+                        </small>
                     </div>
                 </form>
             </div>
@@ -154,12 +161,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
+    const messageInput = document.getElementById('messageInput');
+    const messageForm = document.getElementById('messageForm');
+
+    // Handle Enter to send
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            messageForm.dispatchEvent(new Event('submit'));
+        }
+    });
+
     // Form submit
-    document.getElementById('messageForm').addEventListener('submit', function(e) {
+    messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const form = this;
+        const msg = messageInput.value.trim();
+        if (!msg) return;
+
         const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
+        const originalHTML = submitBtn.innerHTML;
         
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
@@ -169,23 +190,30 @@ document.addEventListener('DOMContentLoaded', function() {
             body: new FormData(form),
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
             }
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(err => { throw new Error(err.message || 'Lỗi máy chủ') }).catch(() => { throw new Error(res.statusText) });
+            }
+            return res.json();
+        })
         .then(data => {
             if (data.success) {
                 location.reload();
             } else {
                 alert(data.error || 'Có lỗi xảy ra');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+                submitBtn.innerHTML = originalHTML;
             }
         })
         .catch(err => {
-            alert('Có lỗi xảy ra');
+            console.error('Fetch error:', err);
+            alert('Lỗi: ' + (err.message || 'Không thể kết nối đến máy chủ'));
             submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+            submitBtn.innerHTML = originalHTML;
         });
     });
 });

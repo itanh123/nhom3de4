@@ -97,6 +97,39 @@ class ResultController extends Controller
 
         return back()->with('success', 'Đã tạo giải thích bằng AI!');
     }
+    public function explainDeeper(ExamResult $result, Request $request)
+    {
+        if ($result->student_id !== Auth::id() && !optional(Auth::user())->isAdmin() && !optional(Auth::user())->isTeacher()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'question_id' => 'required|exists:questions,id',
+        ]);
+
+        $aiService = new AiService();
+        $question = \App\Models\Question::findOrFail($request->question_id);
+        
+        $correctAnswer = $question->answers->where('is_correct', true)->first();
+
+        $payload = [
+            'question' => $question->content,
+            'correct_answer' => $correctAnswer?->option_text ?? 'N/A',
+            'current_explanation' => $question->explanation,
+        ];
+
+        $aiResult = $aiService->explainDeeper($payload);
+
+        if (isset($aiResult['error'])) {
+            return response()->json(['error' => $aiResult['error']], 500);
+        }
+
+        ActivityLogger::aiExplainAnswer($question->id);
+
+        return response()->json([
+            'content' => $aiResult['content']
+        ]);
+    }
 
     public function generateLearningPath(ExamResult $result)
     {

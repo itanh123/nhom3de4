@@ -223,7 +223,7 @@ class ChatController extends Controller
             ];
         }
 
-        $model = env('OPENROUTER_MODEL', 'mistralai/mistral-7b-instruct');
+        $model = env('OPENROUTER_MODEL', 'meta-llama/llama-3.1-8b-instruct:free');
         $apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
         try {

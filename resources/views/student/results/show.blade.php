@@ -77,11 +77,23 @@
                     </div>
                 @endif
                 @if($question->explanation && ($result->exam?->show_explain || $question->ai_generated))
-                <div class="mt-3 p-3 bg-info bg-opacity-10 border border-info border-start-4 rounded-end">
-                    <div class="d-flex align-items-center mb-1">
+                <div class="mt-3 p-3 bg-info bg-opacity-10 border border-info border-start-4 rounded-end position-relative" id="explain-box-{{ $question->id }}">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
                         <small class="fw-bold text-info"><i class="bi bi-info-circle-fill me-1"></i>Giải thích từ Quiz Lumina AI:</small>
+                        <button class="btn btn-sm btn-link text-info p-0 explain-deeper-btn" data-question-id="{{ $question->id }}" title="Giải thích sâu hơn với AI">
+                            <i class="bi bi-stars me-1"></i>Giải thích sâu hơn
+                        </button>
                     </div>
-                    <p class="mb-0 text-dark-emphasis small italic">{{ $question->explanation }}</p>
+                    <div class="explanation-content">
+                        <p class="mb-0 text-dark-emphasis small italic">{{ $question->explanation }}</p>
+                    </div>
+                    <div class="deeper-explanation mt-2 pt-2 border-top border-info border-opacity-25 d-none">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-info text-white"><i class="bi bi-mortarboard-fill me-1"></i>Phân tích chuyên sâu</span>
+                        </div>
+                        <div class="deeper-content small text-dark-emphasis"></div>
+                    </div>
+                    <div class="spinner-border spinner-border-sm text-info d-none position-absolute top-50 start-50 translate-middle" role="status"></div>
                 </div>
                 @endif
             </div>
@@ -90,4 +102,55 @@
 </div>
 @endforeach
 <div class="text-center mt-4"><a href="{{ route('student.exams.index') }}" class="btn btn-primary btn-lg">Làm bài thi khác</a></div>
+
+@push('scripts')
+<script>
+document.querySelectorAll('.explain-deeper-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const questionId = this.dataset.questionId;
+        const box = document.getElementById(`explain-box-${questionId}`);
+        const deeperContainer = box.querySelector('.deeper-explanation');
+        const deeperContent = box.querySelector('.deeper-content');
+        const spinner = box.querySelector('.spinner-border');
+        const currentBtn = this;
+
+        if (!deeperContainer.classList.contains('d-none')) {
+            deeperContainer.classList.add('d-none');
+            return;
+        }
+
+        // Show loading
+        spinner.classList.remove('d-none');
+        currentBtn.disabled = true;
+
+        try {
+            const response = await fetch(`{{ route('student.results.ai-explain-deeper', $result) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ question_id: questionId })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Lỗi: ' + data.error);
+            } else {
+                deeperContent.innerHTML = data.content.replace(/\n/g, '<br>');
+                deeperContainer.classList.remove('d-none');
+                currentBtn.innerHTML = '<i class="bi bi-chevron-up me-1"></i>Thu gọn';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Đã xảy ra lỗi khi kết nối với AI.');
+        } finally {
+            spinner.classList.add('d-none');
+            currentBtn.disabled = false;
+        }
+    });
+});
+</script>
+@endpush
 @endsection

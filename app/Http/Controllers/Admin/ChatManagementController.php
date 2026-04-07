@@ -184,13 +184,13 @@ class ChatManagementController extends Controller
         ]);
 
         if ($validator->fails()) {
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'error' => $validator->errors()->first(),
                 ], 422);
             }
-            return back()->withErrors($validator);
+            return back()->withInput()->withErrors($validator);
         }
 
         DB::beginTransaction();
@@ -209,13 +209,13 @@ class ChatManagementController extends Controller
 
             // If admin wants AI to respond, generate response
             $aiResponse = null;
-            if ($request->boolean('include_ai') && $request->boolean('__ai_trigger')) {
+            if ($request->boolean('include_ai')) {
                 $aiResponse = $this->generateAiResponse($session, $request->message);
             }
 
             DB::commit();
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => $message,
@@ -229,7 +229,7 @@ class ChatManagementController extends Controller
             DB::rollBack();
             Log::error('Send Message Error', ['message' => $e->getMessage()]);
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Lỗi: ' . $e->getMessage(),

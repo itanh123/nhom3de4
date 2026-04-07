@@ -238,6 +238,7 @@ class QuestionController extends Controller
                 Question::TYPE_FILL_IN_BLANK
             ])],
             'prompt' => 'nullable|string|max:500',
+            'reference_file' => 'nullable|file|mimes:txt|max:5120', // Max 5MB
         ]);
 
         $topic = Topic::findOrFail($validated['topic_id']);
@@ -246,7 +247,16 @@ class QuestionController extends Controller
         $aiService = new AiService();
 
         $documentText = '';
-        if ($document) {
+
+        // 1. Check if a new file is uploaded (Priority 1)
+        if ($request->hasFile('reference_file')) {
+            $file = $request->file('reference_file');
+            $documentText = file_get_contents($file->getRealPath());
+            if (!is_string($documentText)) $documentText = '';
+        } 
+        
+        // 2. Otherwise use the selected document (Priority 2)
+        if (empty($documentText) && $document) {
             if (Storage::disk('public')->exists($document->file_path)) {
                 $mime = $document->mime_type ?? '';
                 if (in_array($mime, ['text/plain', 'text/csv', 'text/html', 'text/markdown', 'application/json'])) {
@@ -307,31 +317,36 @@ class QuestionController extends Controller
 
     public function saveAiQuestions(Request $request)
     {
-        $data = $request->session()->get('ai_questions_preview');
+        $sessionData = $request->session()->get('ai_questions_preview');
 
-        if (!$data) {
+        if (!$sessionData) {
             return redirect()->route('questions.generate-ai.form')->withErrors(['error' => 'Không có dữ liệu để lưu.']);
         }
 
         $validated = $request->validate([
-            'selected_questions' => 'required|array|min:1',
-            'selected_questions.*' => 'integer',
+            'questions' => 'required|array',
+            'questions.*.selected' => 'nullable|boolean',
+            'questions.*.content' => 'required_if:questions.*.selected,1|string',
+            'questions.*.explanation' => 'nullable|string',
+            'questions.*.answers' => 'required_if:questions.*.selected,1|array',
+            'questions.*.answers.*.option_text' => 'required_if:questions.*.selected,1|string',
+            'questions.*.answers.*.is_correct' => 'required_if:questions.*.selected,1|boolean',
         ]);
 
         DB::beginTransaction();
         try {
             $savedCount = 0;
 
-            foreach ($data['questions'] as $index => $qData) {
-                if (!in_array($index, $validated['selected_questions'])) {
+            foreach ($validated['questions'] as $qData) {
+                if (!isset($qData['selected']) || !$qData['selected']) {
                     continue;
                 }
 
                 $question = Question::create([
-                    'topic_id' => $data['topic_id'],
+                    'topic_id' => $sessionData['topic_id'],
                     'created_by' => Auth::id(),
-                    'type' => $data['type'],
-                    'difficulty' => $data['difficulty'],
+                    'type' => $sessionData['type'],
+                    'difficulty' => $sessionData['difficulty'],
                     'content' => $qData['content'],
                     'explanation' => $qData['explanation'] ?? null,
                     'ai_generated' => true,
@@ -341,7 +356,7 @@ class QuestionController extends Controller
                 foreach ($qData['answers'] as $order => $answer) {
                     $question->answers()->create([
                         'option_text' => $answer['option_text'],
-                        'is_correct' => $answer['is_correct'] ?? false,
+                        'is_correct' => (bool)$answer['is_correct'],
                         'display_order' => $order + 1,
                     ]);
                 }

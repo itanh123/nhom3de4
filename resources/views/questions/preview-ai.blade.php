@@ -31,20 +31,42 @@
 <form action="{{ route('questions.generate-ai.save') }}" method="POST" id="mainForm">
     @csrf
     @foreach($questions as $index => $q)
-    <div class="card shadow-sm mb-3">
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
             <div class="d-flex gap-3">
-                <div class="flex-shrink-0"><input type="checkbox" name="selected_questions[]" value="{{ $index }}" class="form-check-input question-checkbox" checked></div>
+                <div class="flex-shrink-0 pt-1">
+                    <input type="checkbox" name="questions[{{ $index }}][selected]" value="1" class="form-check-input question-checkbox" checked>
+                </div>
                 <div class="flex-grow-1">
-                    <span class="badge bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width:32px;height:32px;">{{ $index + 1 }}</span>
-                    <p class="fw-medium fs-6 mb-3">{{ $q['content'] }}</p>
-                    @foreach($q['answers'] as $ansIdx => $answer)
-                    <div class="p-2 rounded mb-2 d-flex align-items-center gap-2 {{ $answer['is_correct'] ? 'bg-success bg-opacity-10 border border-success' : 'bg-light' }}">
-                        <span class="badge {{ $answer['is_correct'] ? 'bg-success' : 'bg-secondary' }} rounded-circle d-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:0.7rem;">{{ chr(65 + $ansIdx) }}</span>
-                        <span>{{ $answer['option_text'] }}</span>
-                        @if($answer['is_correct'])<span class="badge bg-success ms-auto"><small>✓ Đúng</small></span>@endif
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;">{{ $index + 1 }}</span>
+                        <div class="text-end text-muted small">
+                            <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa trực tiếp
+                        </div>
                     </div>
-                    @endforeach
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Nội dung câu hỏi</label>
+                        <textarea name="questions[{{ $index }}][content]" class="form-control" rows="2" required>{{ $q['content'] }}</textarea>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        @foreach($q['answers'] as $ansIdx => $answer)
+                        <div class="col-md-6">
+                            <div class="p-2 rounded d-flex align-items-center gap-2 {{ $answer['is_correct'] ? 'bg-success bg-opacity-10 border border-success' : 'bg-light border' }}">
+                                <span class="badge {{ $answer['is_correct'] ? 'bg-success' : 'bg-secondary' }} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;font-size:0.7rem;">{{ chr(65 + $ansIdx) }}</span>
+                                <input type="text" name="questions[{{ $index }}][answers][{{ $ansIdx }}][option_text]" value="{{ $answer['option_text'] }}" class="form-control form-control-sm border-0 bg-transparent" required>
+                                <input type="hidden" name="questions[{{ $index }}][answers][{{ $ansIdx }}][is_correct]" value="{{ $answer['is_correct'] ? '1' : '0' }}">
+                                @if($answer['is_correct'])<i class="bi bi-check-circle-fill text-success"></i>@endif
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    <div class="bg-info bg-opacity-10 p-3 rounded border border-info border-start-4">
+                        <label class="form-label fw-bold text-info small"><i class="bi bi-info-circle-fill me-1"></i>Giải thích</label>
+                        <textarea name="questions[{{ $index }}][explanation]" class="form-control form-control-sm bg-transparent border-0 border-bottom rounded-0" rows="1" placeholder="Nhập giải thích...">{{ $q['explanation'] ?? '' }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>

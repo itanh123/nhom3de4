@@ -71,6 +71,7 @@ Route::prefix('student')
         Route::get('/results/{result}', [StudentResultController::class, 'show'])->name('results.show');
         Route::post('/results/{result}/rate-ai', [StudentResultController::class, 'rateAi'])->name('results.rate-ai');
         Route::post('/results/{result}/ai-explain', [StudentResultController::class, 'generateExplanation'])->name('results.ai-explain');
+        Route::post('/results/{result}/ai-explain-deeper', [StudentResultController::class, 'explainDeeper'])->name('results.ai-explain-deeper');
         Route::post('/results/{result}/ai-learning-path', [StudentResultController::class, 'generateLearningPath'])->name('results.ai-learning-path');
     });
 

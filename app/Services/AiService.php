@@ -9,6 +9,14 @@ use Illuminate\Support\Facades\Log;
 
 class AiService
 {
+    protected const FREE_MODELS = [
+        'meta-llama/llama-3.1-8b-instruct:free',
+        'mistralai/mistral-7b-instruct:free',
+        'google/gemini-2.0-flash-lite-preview-02-05:free',
+        'deepseek/deepseek-chat:free'
+    ];
+    protected const PAID_FALLBACK = 'google/gemini-2.0-flash-001'; // Paid but reliable
+
     /**
      * Get the active config for a given purpose.
      */
@@ -72,10 +80,48 @@ class AiService
     /**
      * Call OpenRouter API (Primary - Recommended).
      */
-    protected function callOpenRouter(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens): array
+    public function callOpenRouter(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens): array
+    {
+        $startTime = microtime(true);
+        $maxFreeTime = 10; // 10 seconds for FREE
+        $lastError = '';
+
+        // 1. Try the specifically requested model (if active)
+        if ($model) {
+            Log::info("Trying primary model: {$model}");
+            $result = $this->callOpenRouterDirectAction($apiKey, $model, $systemPrompt, $prompt, $temperature, $maxTokens, 15);
+            if ($result['success']) return ['content' => $result['content']];
+            $lastError = $result['error'];
+        }
+
+        // 2. If primary failed or was not specified, and we are within 10s window, try FREE models
+        if ((microtime(true) - $startTime) < $maxFreeTime) {
+            foreach (self::FREE_MODELS as $freeModel) {
+                if ($freeModel === $model) continue;
+
+                Log::info("Trying fallback FREE model: {$freeModel} (Elapsed: " . round(microtime(true) - $startTime) . "s)");
+                $result = $this->callOpenRouterDirectAction($apiKey, $freeModel, $systemPrompt, $prompt, $temperature, $maxTokens, 10);
+                if ($result['success']) return ['content' => $result['content']];
+                
+                $lastError = $result['error'];
+                if (str_contains($lastError, '401') || str_contains($lastError, 'API Key')) break;
+            }
+        }
+
+        // 3. Final Fallback to PAID model after 10s
+        Log::warning("All attempts failed after 10s. Using PAID fallback: " . self::PAID_FALLBACK);
+        $result = $this->callOpenRouterDirectAction($apiKey, self::PAID_FALLBACK, $systemPrompt, $prompt, $temperature, $maxTokens, 30);
+        
+        if ($result['success']) {
+            return ['content' => $result['content'], 'billed' => true];
+        }
+
+        return ['error' => "Đã thử cả AI Free (10s) và AI Trả phí đều thất bại. Lỗi cuối: {$lastError}"];
+    }
+
+    protected function callOpenRouterDirectAction(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens, int $timeout): array
     {
         $url = 'https://openrouter.ai/api/v1/chat/completions';
-
         try {
             $messages = [];
             if ($systemPrompt) {
@@ -84,7 +130,7 @@ class AiService
             $messages[] = ['role' => 'user', 'content' => $prompt];
 
             $response = Http::withoutVerifying()
-                ->timeout(120)
+                ->timeout($timeout)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'HTTP-Referer' => config('app.url', 'http://localhost'),
@@ -98,36 +144,20 @@ class AiService
                 ]);
 
             if ($response->successful()) {
-                $data = $response->json();
-                $content = $data['choices'][0]['message']['content'] ?? '';
-                
-                if (empty($content)) {
-                    return ['error' => 'OpenRouter trả về phản hồi trống.'];
-                }
-                
-                return ['content' => $content];
+                $content = $response->json('choices.0.message.content', '');
+                return ['success' => true, 'content' => $content];
             }
 
-            $errorBody = $response->json();
-            $errorMessage = $errorBody['error']['message'] ?? $response->body();
-            
-            Log::error('OpenRouter API Error', [
-                'status' => $response->status(),
-                'body' => $errorBody,
-            ]);
-
-            return ['error' => 'OpenRouter lỗi: ' . $errorMessage];
-
+            return ['success' => false, 'error' => $response->body()];
         } catch (\Exception $e) {
-            Log::error('OpenRouter Exception', ['message' => $e->getMessage()]);
-            return ['error' => 'Lỗi kết nối OpenRouter: ' . $e->getMessage()];
+            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
     /**
      * Call Groq API (Fallback - Free tier available).
      */
-    protected function callGroq(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens): array
+    public function callGroq(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens): array
     {
         $url = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -378,6 +408,7 @@ class AiService
             }
         }
 
+        // result['content'] is a string from AI here
         $parsedQuestions = $this->parseAiQuestions($result['content']);
 
         if (empty($parsedQuestions)) {
@@ -586,6 +617,33 @@ class AiService
 
         return $result;
     }
+    /**
+     * Explain an answer with AI in depth for pedagogical purposes.
+     */
+    public function explainDeeper(array $payload): array
+    {
+        $config = $this->getActiveConfig(AiConfig::PURPOSE_ANSWER_EXPLANATION);
+
+        $prompt = "Hãy đóng vai một giáo viên tận tâm, giải thích sâu hơn về kiến thức liên quan đến câu hỏi sau:\n";
+        $prompt .= "Câu hỏi: {$payload['question']}\n";
+        $prompt .= "Đáp án đúng: {$payload['correct_answer']}\n";
+        if (!empty($payload['current_explanation'])) {
+            $prompt .= "Giải thích hiện tại: {$payload['current_explanation']}\n";
+        }
+        $prompt .= "\nYêu cầu:\n";
+        $prompt .= "1. Phân tích bản chất kiến thức đằng sau câu hỏi.\n";
+        $prompt .= "2. Tại sao đáp án đúng là lựa chọn chính xác nhất.\n";
+        $prompt .= "3. Tại sao các phương án khác chưa đúng (với các lỗi sai phổ biến).\n";
+        $prompt .= "4. Đưa ra 1 ví dụ minh họa thực tế hoặc mẹo ghi nhớ nhanh.\n";
+        $prompt .= "Hãy viết bằng giọng văn khích lệ, dễ hiểu.";
+
+        if ($config) {
+            $result = $this->callAi($config, $prompt);
+            if (!isset($result['error'])) return $result;
+        }
+
+        return $this->directApiCall($prompt);
+    }
 
     /**
      * Generate a learning path based on result.
@@ -681,77 +739,20 @@ class AiService
      */
     protected function directApiCall(string $message): array
     {
-        // Try OpenRouter first
         $apiKey = env('OPENROUTER_API_KEY');
-        if ($apiKey && $apiKey !== 'your-openrouter-api-key-here') {
-            // Priority list of FREE models on OpenRouter
-            $models = array_unique(array_filter([
-                env('OPENROUTER_MODEL'),
-                'meta-llama/llama-3.1-8b-instruct:free',
-                'mistralai/mistral-7b-instruct:free',
-                'google/gemini-2.0-flash-lite-001',
-                'deepseek/deepseek-chat:free'
-            ]));
-
-            $lastError = '';
-            foreach ($models as $model) {
-                Log::info("Trying OpenRouter direct call with model: {$model}");
-                $result = $this->callOpenRouterDirect($apiKey, $model, $message);
-                if ($result['success']) {
-                    return $result;
-                }
-                
-                $lastError = $result['error'];
-                Log::warning("OpenRouter model {$model} failed: {$lastError}");
-                
-                // If it's a 404/400 (model not found/invalid), try the next one in the list
-                if (!str_contains($lastError, '404') && !str_contains($lastError, '400') && !str_contains($lastError, 'valid model ID')) {
-                    // If it's a 401 (Auth) or other serious error, don't waste time retrying with other models
-                    break;
-                }
-            }
-            
-            return ['error' => "OpenRouter failed after retrying multiple models. Last error: {$lastError}"];
+        $model = env('OPENROUTER_MODEL', 'meta-llama/llama-3.1-8b-instruct:free');
+        
+        if (!$apiKey || $apiKey === 'your-openrouter-api-key-here') {
+            return ['error' => 'Chưa cấu hình API Key cho OpenRouter.'];
         }
 
-        // Try Groq fallback
-        $apiKey = env('GROQ_API_KEY');
-        if ($apiKey && $apiKey !== 'your-groq-api-key-here') {
-            $result = $this->callGroqDirect($apiKey, env('GROQ_MODEL', 'llama-3.3-70b-versatile'), $message);
-            if ($result['success']) {
-                return $result;
-            }
-            return ['error' => $result['error']];
+        $result = $this->callOpenRouter($apiKey, $model, null, $message, 0.7, 2000);
+        
+        if (isset($result['error'])) {
+            return ['success' => false, 'error' => $result['error']];
         }
 
-        return ['error' => 'Không có API key nào được cấu hình.'];
-    }
-
-    protected function callOpenRouterDirect(string $apiKey, string $model, string $message): array
-    {
-        try {
-            $response = Http::withoutVerifying()
-                ->timeout(120)
-                ->withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'HTTP-Referer' => config('app.url', 'http://localhost'),
-                    'X-Title' => config('app.name', 'AI Quiz System'),
-                ])
-                ->post('https://openrouter.ai/api/v1/chat/completions', [
-                    'model' => $model,
-                    'messages' => [['role' => 'user', 'content' => $message]],
-                ]);
-
-            if ($response->successful()) {
-                $content = $response->json('choices.0.message.content', '');
-                return ['success' => true, 'content' => $content];
-            }
-
-            return ['success' => false, 'error' => 'OpenRouter error: ' . $response->body()];
-
-        } catch (\Exception $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return ['success' => true, 'content' => $result['content'], 'billed' => $result['billed'] ?? false];
     }
 
     protected function callGroqDirect(string $apiKey, string $model, string $message): array

@@ -171,29 +171,32 @@ class AdminActionParser
 
     protected function callAiForParsing(AiConfig $config, string $systemPrompt, string $prompt): array
     {
-        $apiKey = decrypt($config->api_key);
-        $provider = $config->provider;
-        $model = $config->model_name;
-        $temperature = 0.1;
+        $aiService = new AiService();
+        $apiKey = '';
+        if (!empty($config->api_key)) {
+            try {
+                $apiKey = decrypt($config->api_key);
+            } catch (\Exception $e) {
+                $apiKey = $config->api_key;
+            }
+        }
+
+        if (empty($apiKey)) {
+            return ['error' => 'API Key trống.'];
+        }
+
+        $temperature = 0.1; // Low temperature for parsing
         $maxTokens = 1000;
 
-        if ($provider === 'openrouter') {
-            return $this->callOpenRouter($apiKey, $model, $systemPrompt, $prompt, $temperature, $maxTokens);
-        }
-        if ($provider === 'groq') {
-            return $this->callGroq($apiKey, $model, $systemPrompt, $prompt, $temperature, $maxTokens);
-        }
-        if ($provider === 'openai') {
-            return $this->callOpenAI($apiKey, $model, $systemPrompt, $prompt, $temperature, $maxTokens, $config->base_url);
-        }
-        if ($provider === 'anthropic') {
-            return $this->callAnthropic($apiKey, $model, $systemPrompt, $prompt, $maxTokens, $config->base_url);
-        }
-        if ($provider === 'google') {
-            return $this->callGoogle($apiKey, $model, $systemPrompt, $prompt, $temperature, $maxTokens);
+        if ($config->provider === 'openrouter') {
+            return $aiService->callOpenRouter($apiKey, $config->model_name, $systemPrompt, $prompt, $temperature, $maxTokens);
         }
 
-        return ['error' => "Provider '{$provider}' không được hỗ trợ."];
+        if ($config->provider === 'groq') {
+            return $aiService->callGroq($apiKey, $config->model_name, $systemPrompt, $prompt, $temperature, $maxTokens);
+        }
+
+        return ['error' => "Provider '{$config->provider}' không được hỗ trợ cho AI Agent."];
     }
 
     protected function getParserSystemPrompt(): string
