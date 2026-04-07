@@ -1,85 +1,209 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Lumina Quiz Admin' }}</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
     <style>
-        body { font-family: Inter, sans-serif; }
-        .brand { font-family: "Plus Jakarta Sans", sans-serif; }
-        .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 450, "GRAD" 0, "opsz" 24; }
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background-color: #f3f4f6;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background: #1e293b;
+            color: white;
+            padding-top: 1rem;
+            z-index: 1000;
+        }
+        .sidebar .nav-link {
+            color: #94a3b8;
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        .sidebar .nav-link:hover {
+            background: #334155;
+            color: white;
+        }
+        .sidebar .nav-link.active {
+            background: #4f46e5;
+            color: white;
+        }
+        .sidebar .nav-link i {
+            width: 24px;
+        }
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+        }
+        .top-bar {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .content-area {
+            padding: 1.5rem;
+        }
+        .brand-text {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #4f46e5;
+        }
+        .sidebar-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            padding: 1rem 1rem 0.5rem;
+        }
     </style>
+    @stack('styles')
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased">
-<aside class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 p-4 z-30">
-    <div class="mb-6">
-        <h1 class="brand text-xl font-extrabold text-blue-700">Lumina Admin</h1>
-        <p class="text-xs text-slate-500 uppercase tracking-widest">Quiz Generator</p>
-    </div>
-    <nav class="space-y-2 text-sm">
-        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.dashboard*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
-            <span class="material-symbols-outlined text-base">dashboard</span><span>Dashboard</span>
-        </a>
-        <a href="{{ route('admin.roles.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.roles.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
-            <span class="material-symbols-outlined text-base">admin_panel_settings</span><span>Role Management</span>
-        </a>
-        <a href="{{ route('admin.users.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.users.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
-            <span class="material-symbols-outlined text-base">group</span><span>User Management</span>
-        </a>
-        <a href="{{ route('admin.topics.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.topics.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
-            <span class="material-symbols-outlined text-base">account_tree</span><span>Topic Management</span>
-        </a>
-        <a href="{{ route('questions.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('questions.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
-            <span class="material-symbols-outlined text-base">quiz</span><span>Question Management</span>
-        </a>
-        <a href="{{ route('exams.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('exams.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
-            <span class="material-symbols-outlined text-base">assignment</span><span>Exam Management</span>
-        </a>
-        <a href="{{ route('admin.reports.index') }}" class="flex items-center gap-2 px-3 py-2 rounded-xl {{ request()->routeIs('admin.reports.*') ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-slate-100 text-slate-700' }}">
-            <span class="material-symbols-outlined text-base">insights</span><span>Reports</span>
-        </a>
-    </nav>
-</aside>
+<body>
+    <nav class="sidebar">
+        <div class="px-3 mb-4">
+            <h1 class="brand-text">Quiz Admin</h1>
+            <small class="text-muted">{{ auth()->user()->role === 'admin' ? 'Quản trị viên' : 'Giáo viên' }}</small>
+        </div>
 
-<header class="fixed top-0 left-64 right-0 h-16 bg-white/90 backdrop-blur border-b border-slate-200 z-20 px-6 flex items-center justify-between">
-    <h2 class="brand font-bold text-slate-800">{{ $title ?? 'Admin' }}</h2>
-    <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <span class="text-xs font-bold text-blue-700">{{ substr(auth()->user()->name, 0, 1) }}</span>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard*') ? 'active' : '' }}">
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                </a>
+            </li>
+            
+            @if(auth()->user()->role === 'admin')
+                <li class="nav-item">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="bi bi-people me-2"></i>Người dùng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                        <i class="bi bi-shield-lock me-2"></i>Phân quyền
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.topics.index') }}" class="nav-link {{ request()->routeIs('admin.topics.*') ? 'active' : '' }}">
+                        <i class="bi bi-folder me-2"></i>Chủ đề
+                    </a>
+                </li>
+            @endif
+            
+            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher')
+                <li class="nav-item">
+                    <a href="{{ route('questions.index') }}" class="nav-link {{ request()->routeIs('questions.*') ? 'active' : '' }}">
+                        <i class="bi bi-list-question me-2"></i>Câu hỏi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('exams.index') }}" class="nav-link {{ request()->routeIs('exams.*') ? 'active' : '' }}">
+                        <i class="bi bi-file-earmark-text me-2"></i>Bài thi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('results.index') }}" class="nav-link {{ request()->routeIs('results.*') ? 'active' : '' }}">
+                        <i class="bi bi-clipboard-check me-2"></i>Kết quả
+                    </a>
+                </li>
+            @endif
+
+            @if(auth()->user()->role === 'admin')
+                <div class="sidebar-section-title">Hệ thống</div>
+                
+                <li class="nav-item">
+                    <a href="{{ route('admin.ai-configs.index') }}" class="nav-link {{ request()->routeIs('admin.ai-configs.*') ? 'active' : '' }}">
+                        <i class="bi bi-robot me-2"></i>Cấu hình AI
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.chat.index') }}" class="nav-link {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}">
+                        <i class="bi bi-chat-dots me-2"></i>Quản lý Chat
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.ai-agent.index') }}" class="nav-link {{ request()->routeIs('admin.ai-agent.*') ? 'active' : '' }}">
+                        <i class="bi bi-robot me-2"></i>AI Agent
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.activity-logs.index') }}" class="nav-link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}">
+                        <i class="bi bi-clock-history me-2"></i>Nhật ký hoạt động
+                    </a>
+                </li>
+            @endif
+        </ul>
+
+        <div class="mt-auto p-3 border-top border-secondary">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                    <span class="text-white fw-bold">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-medium text-truncate">{{ auth()->user()->name }}</div>
+                    <small class="text-muted">{{ auth()->user()->email }}</small>
+                </div>
             </div>
-            <span class="text-sm font-medium text-slate-700">{{ auth()->user()->name }}</span>
-            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                {{ ucfirst(auth()->user()->role) }}
-            </span>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                    <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                </button>
+            </form>
         </div>
-        <form method="POST" action="{{ route('logout') }}" class="inline">
-            @csrf
-            <button type="submit" class="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                <span class="material-symbols-outlined text-base">logout</span>
-                Đăng xuất
-            </button>
-        </form>
-    </div>
-</header>
+    </nav>
 
-<main class="ml-64 pt-20 p-6">
-    @if (session('success'))
-        <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3">{{ session('success') }}</div>
-    @endif
-    @if ($errors->any())
-        <div class="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3">
-            <ul class="list-disc ml-5">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-    @yield('content')
-</main>
+    <div class="main-content">
+        <header class="top-bar">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0 fw-semibold text-secondary">{{ $title ?? 'Admin' }}</h4>
+                <div>
+                    <span class="badge bg-{{ auth()->user()->role === 'admin' ? 'danger' : 'warning' }}">
+                        {{ auth()->user()->role === 'admin' ? 'Admin' : 'Giáo viên' }}
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+            
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @stack('scripts')
 </body>
 </html>

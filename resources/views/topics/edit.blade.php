@@ -13,6 +13,7 @@
                 <form method="POST" action="{{ route('topics.update', $topic) }}">
                     @csrf
                     @method('PUT')
+                    @method('PUT')
                     <div class="mb-3">
                         <label for="name" class="form-label">Tên chủ đề <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror"

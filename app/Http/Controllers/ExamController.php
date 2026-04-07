@@ -6,6 +6,7 @@ use App\Models\Exam;
 use App\Models\Topic;
 use App\Models\Question;
 use App\Models\ExamQuestion;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,10 +16,10 @@ class ExamController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Exam::with(['topic', 'creator']);
+        $query = Exam::with(['topic', 'creator'])->withCount('examQuestions');
 
         // Filter by role: teacher chỉ thấy bài thi của mình
-        if (Auth::user()->isTeacher()) {
+        if (optional(Auth::user())->isTeacher()) {
             $query->where('created_by', Auth::id());
         }
 
@@ -105,6 +106,8 @@ class ExamController extends Controller
             }
 
             DB::commit();
+            ActivityLogger::createExam($exam);
+
             return redirect()->route('exams.show', $exam)
                 ->with('success', 'Bài thi đã được tạo thành công!');
         } catch (\Exception $e) {
@@ -125,7 +128,7 @@ class ExamController extends Controller
     public function edit(Exam $exam)
     {
         // Teacher chỉ sửa được bài thi của mình
-        if (Auth::user()->isTeacher() && $exam->created_by !== Auth::id()) {
+        if (optional(Auth::user())->isTeacher() && $exam->created_by !== Auth::id()) {
             abort(403, 'Bạn không có quyền sửa bài thi này.');
         }
 
@@ -145,7 +148,7 @@ class ExamController extends Controller
     public function update(Request $request, Exam $exam)
     {
         // Teacher chỉ sửa được bài thi của mình
-        if (Auth::user()->isTeacher() && $exam->created_by !== Auth::id()) {
+        if (optional(Auth::user())->isTeacher() && $exam->created_by !== Auth::id()) {
             abort(403, 'Bạn không có quyền sửa bài thi này.');
         }
 
@@ -197,6 +200,8 @@ class ExamController extends Controller
             }
 
             DB::commit();
+            ActivityLogger::updateExam($exam);
+
             return redirect()->route('exams.show', $exam)
                 ->with('success', 'Bài thi đã được cập nhật!');
         } catch (\Exception $e) {
@@ -208,10 +213,11 @@ class ExamController extends Controller
     public function destroy(Exam $exam)
     {
         // Teacher chỉ xóa được bài thi của mình
-        if (Auth::user()->isTeacher() && $exam->created_by !== Auth::id()) {
+        if (optional(Auth::user())->isTeacher() && $exam->created_by !== Auth::id()) {
             abort(403, 'Bạn không có quyền xóa bài thi này.');
         }
 
+        ActivityLogger::deleteExam($exam);
         $exam->examQuestions()->delete();
         $exam->delete();
 
@@ -221,7 +227,7 @@ class ExamController extends Controller
 
     public function togglePublish(Exam $exam)
     {
-        if (Auth::user()->isTeacher() && $exam->created_by !== Auth::id()) {
+        if (optional(Auth::user())->isTeacher() && $exam->created_by !== Auth::id()) {
             abort(403, 'Bạn không có quyền thay đổi trạng thái bài thi này.');
         }
 

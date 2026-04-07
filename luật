@@ -1,0 +1,200 @@
+Before changing anything in this Laravel project, read and obey these rules carefully.
+
+This project already has many modules implemented. Do NOT assume a clean project. Do NOT generate duplicate code blindly.
+
+============================================================
+COMMON MISTAKES YOU MUST AVOID
+==============================
+
+1. DO NOT create duplicate imports
+
+* Do not import the same class twice in one file
+* Do not leave duplicated `use` statements
+* Do not duplicate namespace blocks
+
+2. DO NOT create duplicate classes or duplicate controller logic
+
+* Do not create the same class twice
+* Do not create conflicting Admin and Api controllers for the same feature unless intentionally required
+* Reuse existing controllers/services if possible
+
+3. DO NOT assume methods exist on the User model
+
+* Before using:
+
+  * isAdmin()
+  * isTeacher()
+  * isStudent()
+* first inspect User model
+* if missing, add them once in the correct place
+* then use one consistent role-check strategy everywhere
+
+4. DO NOT assume routes or route names
+
+* Inspect `routes/web.php` and `routes/api.php` before using route()
+* Do not invent route names in Blade or redirects
+* Do not create links to routes that do not exist
+* Keep route names consistent with resource/controller methods
+
+5. DO NOT mismatch HTTP methods
+
+* update actions must use PUT/PATCH
+* delete actions must use DELETE
+* toggle actions must match route definition
+* Blade forms must include:
+
+  * @csrf
+  * @method('PATCH') or @method('DELETE') when needed
+
+6. DO NOT assume database columns or relationships
+
+* Inspect migrations and models before writing queries
+* Do not reference columns that do not exist
+* Do not eager load relations that do not exist
+* Do not call relation names that are undefined
+
+7. DO NOT break existing middleware / role protection
+
+* Inspect middleware aliases and current usage first
+* Keep auth/role middleware compatible
+* Do not invent a new role system if one already exists
+
+8. DO NOT read files unsafely
+
+* Never call `file_get_contents()` blindly
+* Always check file existence first
+* Use Laravel Storage when appropriate
+* Do not try to read pdf/doc/docx as plain text unless parser exists
+* Fail gracefully if file is missing or unsupported
+
+9. DO NOT assume storage path structure
+
+* Inspect how file paths are saved in DB
+* Check whether files are in:
+
+  * storage/app
+  * storage/app/public
+  * public/storage
+* Use the correct disk/path logic
+
+10. DO NOT break Blade views
+
+* Do not use variables not passed from controller
+* Do not use wrong route names
+* Do not duplicate forms
+* Do not forget old() values and validation error display
+* Do not break layout inheritance
+
+11. DO NOT create CRUD that conflicts with existing modules
+
+* Inspect current controllers, views, and menus first
+* Extend existing modules instead of creating another duplicate module
+* Do not create multiple admin UIs for the same feature
+
+12. DO NOT assume AI config structure
+
+* Inspect current `ai_configs` schema and model first
+* Reuse existing fields exactly
+* Do not hardcode API key, model, or provider in code
+* Read active config from database
+
+13. DO NOT assume external API response format blindly
+
+* Validate API response structure
+* Handle invalid JSON safely
+* Strip markdown fences if needed
+* Never crash the page if API fails
+
+14. DO NOT ignore null safety
+
+* Guard nullable relations
+* Guard optional request fields
+* Guard missing files
+* Guard missing config
+* Guard empty arrays / missing keys
+
+15. DO NOT leave duplicate business logic in many places
+
+* Extract shared logic into service/helper when needed
+* Do not repeat the same grading/file/AI logic in multiple controllers
+
+16. DO NOT change working modules unnecessarily
+
+* If a module already works, do not rebuild it
+* Make minimal safe changes
+* Preserve current architecture
+
+17. DO NOT modify files before auditing
+    Always inspect first:
+
+* app/Models
+* app/Http/Controllers
+* app/Http/Middleware
+* app/Services
+* resources/views
+* routes/web.php
+* routes/api.php if present
+* relevant migrations / schema usage
+
+18. DO NOT finish without checking consistency
+    Before finishing, verify:
+
+* route names match Blade usage
+* controller methods match routes
+* forms use correct HTTP method
+* relations used in code exist
+* no duplicate imports/classes remain
+* no obvious runtime crash points remain
+
+============================================================
+WORKFLOW YOU MUST FOLLOW
+========================
+
+Step 1:
+Inspect the existing codebase and identify what already exists.
+
+Step 2:
+List potential conflicts before coding:
+
+* duplicate controller?
+* duplicate route?
+* duplicate Blade page?
+* missing model helper?
+* missing relation?
+* wrong storage usage?
+
+Step 3:
+Apply the smallest safe fix or extension.
+
+Step 4:
+Clean up:
+
+* duplicate imports
+* broken route names
+* method mismatches
+* null access
+* file handling issues
+
+Step 5:
+Modify real project files directly.
+
+============================================================
+PRIORITY ORDER WHEN FIXING
+==========================
+
+1. Fatal errors / runtime crashes
+2. Route and HTTP method mismatches
+3. Undefined methods / undefined relations
+4. File handling and storage issues
+5. Blade/view errors
+6. Role/auth issues
+7. Duplicate code cleanup
+8. Feature extension
+
+============================================================
+FINAL RULE
+==========
+
+Do not explain first.
+Inspect the real project first, then make safe direct changes.
+Never assume; always verify against the current codebase.

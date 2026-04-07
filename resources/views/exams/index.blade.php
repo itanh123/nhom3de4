@@ -76,7 +76,7 @@
                 </td>
                 <td class="px-6 py-4 text-center">
                     <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                        {{ $exam->examQuestions->count() }} câu
+                        {{ $exam->exam_questions_count }} câu
                     </span>
                 </td>
                 <td class="px-6 py-4 text-center">
