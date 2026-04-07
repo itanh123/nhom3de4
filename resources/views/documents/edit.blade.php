@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('admin.layout')
 
 @section('title', 'Chỉnh sửa tài liệu')
 
@@ -14,7 +14,7 @@
     <div class="card-body">
         <form action="{{ route('documents.update', $document) }}" method="POST">
             @csrf
-            @method('PUT') @method('PUT')
+            @method('PUT')
             
             <div class="mb-3">
                 <label class="form-label">Tên file</label>

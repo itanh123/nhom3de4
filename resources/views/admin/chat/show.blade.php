@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('admin.layout')
 
 @section('title', 'Chi tiết Chat - ' . ($session->title ?? 'Cuộc trò chuyện'))
 

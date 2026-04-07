@@ -1,122 +1,106 @@
 @extends('admin.layout')
 
 @section('content')
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-3xl font-extrabold text-slate-900">User Management</h1>
-            <p class="text-slate-500">Create, update, lock and delete system users (except admin).</p>
-        </div>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h2>User Management</h2><p class="text-muted mb-0">Create, update, lock and delete system users (except admin).</p></div>
+</div>
 
-    <div class="rounded-2xl bg-white border border-slate-200 shadow-sm p-5 mb-6">
-        <h2 class="font-bold text-slate-800 mb-3">Create New User</h2>
-        <form method="POST" action="{{ route('admin.users.store') }}" class="grid grid-cols-1 md:grid-cols-6 gap-3">
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Create New User</h6></div>
+    <div class="card-body">
+        <form method="POST" action="{{ route('admin.users.store') }}" class="row g-3">
             @csrf
-            <input name="name" placeholder="Name" class="rounded-xl border-slate-300 md:col-span-2" required>
-            <input name="email" type="email" placeholder="Email" class="rounded-xl border-slate-300 md:col-span-2" required>
-            <input name="password" type="password" placeholder="Password" class="rounded-xl border-slate-300" required>
-            <select name="role" class="rounded-xl border-slate-300" required>
-                <option value="teacher">Teacher</option>
-                <option value="student" selected>Student</option>
-            </select>
-            <label class="inline-flex items-center gap-2 md:col-span-2 text-sm text-slate-600">
-                <input type="checkbox" name="is_active" value="1" checked>
-                Active
-            </label>
-            <div class="md:col-span-6">
-                <button class="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700" type="submit">Create User</button>
+            <div class="col-md-4"><input name="name" placeholder="Name" class="form-control" required></div>
+            <div class="col-md-4"><input name="email" type="email" placeholder="Email" class="form-control" required></div>
+            <div class="col-md-2"><input name="password" type="password" placeholder="Password" class="form-control" required></div>
+            <div class="col-md-2">
+                <select name="role" class="form-select" required>
+                    <option value="teacher">Teacher</option>
+                    <option value="student" selected>Student</option>
+                </select>
+            </div>
+            <div class="col-12 d-flex align-items-center gap-3">
+                <div class="form-check"><input type="checkbox" name="is_active" value="1" checked class="form-check-input" id="newUserActive"><label for="newUserActive" class="form-check-label">Active</label></div>
+                <button class="btn btn-primary" type="submit">Create User</button>
             </div>
         </form>
     </div>
+</div>
 
-    <form method="GET" action="{{ route('admin.users.index') }}" class="mb-6 rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <input name="search" value="{{ request('search') }}" placeholder="Search name or email" class="rounded-xl border-slate-300 md:col-span-2">
-            <select name="role" class="rounded-xl border-slate-300">
-                <option value="">All roles</option>
-                <option value="teacher" @selected(request('role') === 'teacher')>Teacher</option>
-                <option value="student" @selected(request('role') === 'student')>Student</option>
-            </select>
-            <select name="status" class="rounded-xl border-slate-300">
-                <option value="">All status</option>
-                <option value="active" @selected(request('status') === 'active')>Active</option>
-                <option value="locked" @selected(request('status') === 'locked')>Locked</option>
-            </select>
-            <div class="flex gap-2">
-                <button class="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700" type="submit">Filter</button>
-                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold">Reset</a>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ route('admin.users.index') }}" class="row g-3">
+            <div class="col-md-4"><input name="search" value="{{ request('search') }}" placeholder="Search name or email" class="form-control"></div>
+            <div class="col-md-3">
+                <select name="role" class="form-select">
+                    <option value="">All roles</option>
+                    <option value="teacher" @selected(request('role') === 'teacher')>Teacher</option>
+                    <option value="student" @selected(request('role') === 'student')>Student</option>
+                </select>
             </div>
-        </div>
-    </form>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All status</option>
+                    <option value="active" @selected(request('status') === 'active')>Active</option>
+                    <option value="locked" @selected(request('status') === 'locked')>Locked</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-secondary" type="submit">Filter</button>
+                <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
 
-    <div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="bg-slate-50">
-                <tr>
-                    <th class="text-left px-4 py-3">Name</th>
-                    <th class="text-left px-4 py-3">Email</th>
-                    <th class="text-left px-4 py-3">Role</th>
-                    <th class="text-left px-4 py-3">Status</th>
-                    <th class="text-left px-4 py-3">Created</th>
-                    <th class="text-left px-4 py-3">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($users as $user)
-                    <tr class="border-t border-slate-100">
-                        <td class="px-4 py-3 font-medium">{{ $user->name }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $user->email }}</td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                {{ $user->role === 'admin' ? 'bg-purple-100 text-purple-700' : '' }}
-                                {{ $user->role === 'teacher' ? 'bg-blue-100 text-blue-700' : '' }}
-                                {{ $user->role === 'student' ? 'bg-emerald-100 text-emerald-700' : '' }}">
-                                {{ ucfirst($user->role) }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="px-2 py-1 rounded-full text-xs {{ $user->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
-                                {{ $user->is_active ? 'Active' : 'Locked' }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-slate-500">{{ $user->created_at->format('d/m/Y') }}</td>
-                        <td class="px-4 py-3">
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th class="ps-3">Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($users as $user)
+                    <tr>
+                        <td class="ps-3 fw-medium">{{ $user->name }}</td>
+                        <td class="text-muted">{{ $user->email }}</td>
+                        <td><span class="badge {{ $user->role === 'admin' ? 'bg-info' : ($user->role === 'teacher' ? 'bg-primary' : 'bg-success') }}">{{ ucfirst($user->role) }}</span></td>
+                        <td><span class="badge {{ $user->is_active ? 'bg-success' : 'bg-danger' }}">{{ $user->is_active ? 'Active' : 'Locked' }}</span></td>
+                        <td class="text-muted small">{{ $user->created_at->format('d/m/Y') }}</td>
+                        <td>
                             <details>
-                                <summary class="cursor-pointer text-blue-700 font-medium">Edit</summary>
-                                <div class="mt-3 flex flex-wrap gap-2">
-                                    <form method="POST" action="{{ route('admin.users.update', $user) }}" class="flex flex-wrap gap-2">
-                                        @csrf
-                                        @method('PUT')
-                                        <input name="name" value="{{ $user->name }}" class="rounded-xl border-slate-300" required>
-                                        <input name="email" type="email" value="{{ $user->email }}" class="rounded-xl border-slate-300" required>
-                                        <input name="password" type="password" placeholder="New password" class="rounded-xl border-slate-300">
-                                        <select name="role" class="rounded-xl border-slate-300">
-                                            <option value="teacher" @selected($user->role === 'teacher')>Teacher</option>
-                                            <option value="student" @selected($user->role === 'student')>Student</option>
-                                        </select>
-                                        <label class="inline-flex items-center gap-1 px-2 text-xs text-slate-600">
-                                            <input type="checkbox" name="is_active" value="1" @checked($user->is_active)>
-                                            Active
-                                        </label>
-                                        <button class="px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700" type="submit">Update</button>
+                                <summary class="btn btn-sm btn-outline-primary">Edit</summary>
+                                <div class="mt-3">
+                                    <form method="POST" action="{{ route('admin.users.update', $user) }}" class="row g-2 align-items-end">
+                                        @csrf @method('PUT')
+                                        <div class="col-auto"><input name="name" value="{{ $user->name }}" class="form-control form-control-sm" required></div>
+                                        <div class="col-auto"><input name="email" type="email" value="{{ $user->email }}" class="form-control form-control-sm" required></div>
+                                        <div class="col-auto"><input name="password" type="password" placeholder="New password" class="form-control form-control-sm"></div>
+                                        <div class="col-auto">
+                                            <select name="role" class="form-select form-select-sm">
+                                                <option value="teacher" @selected($user->role === 'teacher')>Teacher</option>
+                                                <option value="student" @selected($user->role === 'student')>Student</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-auto"><div class="form-check"><input type="checkbox" name="is_active" value="1" @checked($user->is_active) class="form-check-input"><label class="form-check-label small">Active</label></div></div>
+                                        <div class="col-auto"><button class="btn btn-sm btn-primary" type="submit">Update</button></div>
                                     </form>
-                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Are you sure you want to delete this user?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700" type="submit">Delete</button>
+                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Are you sure?')" class="mt-2">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                                     </form>
                                 </div>
                             </details>
                         </td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-slate-500">No users found.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                    @empty
+                    <tr><td colspan="6" class="text-center text-muted py-4">No users found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <div class="mt-4">{{ $users->links() }}</div>
+</div>
+<div class="d-flex justify-content-center mt-4">{{ $users->links() }}</div>
 @endsection

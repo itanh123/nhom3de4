@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('admin.layout')
 
 @section('title', 'Lịch sử nhập câu hỏi')
 
