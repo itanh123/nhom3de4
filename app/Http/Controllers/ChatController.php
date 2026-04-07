@@ -54,7 +54,7 @@ class ChatController extends Controller
         $userMessage = $request->input('message');
 
         // Get or create session
-        $session = $this->getOrCreateSession($request->user_id, $request->input('session_id'));
+        $session = $this->getOrCreateSession(auth()->id(), $request->input('session_id'));
 
         if (!$session) {
             return response()->json([
@@ -66,7 +66,7 @@ class ChatController extends Controller
         // Save user message
         $userMsg = ChatMessage::create([
             'chat_session_id' => $session->id,
-            'sender_id' => $request->user_id,
+            'sender_id' => auth()->id(),
             'sender_type' => ChatMessage::SENDER_USER,
             'content' => $userMessage,
             'status' => ChatMessage::STATUS_READ,

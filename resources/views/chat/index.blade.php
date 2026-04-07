@@ -408,7 +408,7 @@
                 }
                 addMessage(data.reply, 'ai');
             } else {
-                addMessage('❌ ' + data.error, 'ai');
+                addMessage('❌ ' + (data.error || data.message || 'Lỗi không xác định từ máy chủ.'), 'ai');
             }
         } catch (error) {
             hideTyping();
