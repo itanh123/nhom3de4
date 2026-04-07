@@ -50,7 +50,7 @@
             width: 24px;
         }
         .main-content {
-            margin-left: 250px;
+            margin-left: {{ auth()->check() ? '250px' : '0' }};
             min-height: 100vh;
         }
         .top-bar {
@@ -77,10 +77,11 @@
     @stack('styles')
 </head>
 <body>
+    @auth
     <nav class="sidebar">
         <div class="px-3 mb-4">
             <h1 class="brand-text">Quiz Admin</h1>
-            <small class="text-muted">{{ auth()->user()->role === 'admin' ? 'Quản trị viên' : 'Giáo viên' }}</small>
+            <small class="text-muted">{{ auth()->user()->role === 'admin' ? 'Quản trị viên' : (auth()->user()->role === 'teacher' ? 'Giáo viên' : 'Học sinh') }}</small>
         </div>
 
         <ul class="nav flex-column">
@@ -90,7 +91,7 @@
                 </a>
             </li>
             
-            @if(auth()->user()->role === 'admin')
+            @if(auth()->user()?->role === 'admin')
                 <li class="nav-item">
                     <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                         <i class="bi bi-people me-2"></i>Người dùng
@@ -108,7 +109,7 @@
                 </li>
             @endif
             
-            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher')
+            @if(auth()->user()?->role === 'admin' || auth()->user()?->role === 'teacher')
                 <li class="nav-item">
                     <a href="{{ route('questions.index') }}" class="nav-link {{ request()->routeIs('questions.*') ? 'active' : '' }}">
                         <i class="bi bi-list-question me-2"></i>Câu hỏi
@@ -126,7 +127,7 @@
                 </li>
             @endif
 
-            @if(auth()->user()->role === 'admin')
+            @if(auth()->user()?->role === 'admin')
                 <div class="sidebar-section-title">Hệ thống</div>
                 
                 <li class="nav-item">
@@ -170,18 +171,21 @@
             </form>
         </div>
     </nav>
+    @endauth
 
     <div class="main-content">
+        @auth
         <header class="top-bar">
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="mb-0 fw-semibold text-secondary">{{ $title ?? 'Admin' }}</h4>
                 <div>
                     <span class="badge bg-{{ auth()->user()->role === 'admin' ? 'danger' : 'warning' }}">
-                        {{ auth()->user()->role === 'admin' ? 'Admin' : 'Giáo viên' }}
+                        {{ auth()->user()->role === 'admin' ? 'Admin' : (auth()->user()->role === 'teacher' ? 'Giáo viên' : 'Học sinh') }}
                     </span>
                 </div>
             </div>
         </header>
+        @endauth
 
         <main class="content-area">
             @if (session('success'))
