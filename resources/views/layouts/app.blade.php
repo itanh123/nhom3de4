@@ -105,7 +105,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('chat') ? 'active' : '' }}" href="{{ route('chat') }}">
-                    <i class="bi bi-chat-dots me-2"></i>Chat AI
+                    <i class="bi bi-chat-dots me-2"></i>Chat AI (Hỗ trợ)
                 </a>
             </li>
         </ul>
@@ -143,7 +143,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('chat') ? 'active' : '' }}" href="{{ route('chat') }}">
-                    <i class="bi bi-chat-dots me-2"></i>Chat AI
+                    <i class="bi bi-chat-dots me-2"></i>Chat AI (Hỗ trợ)
                 </a>
             </li>
         </ul>
@@ -201,17 +201,27 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.ai-configs.*') ? 'active' : '' }}" href="{{ route('admin.ai-configs.index') }}">
-                    <i class="bi bi-robot me-2"></i>AI Configs
+                    <i class="bi bi-gear me-2"></i>Cấu hình AI
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
+                    <i class="bi bi-chat-left-dots me-2"></i>Quản lý Chat
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.ai-agent.*') ? 'active' : '' }}" href="{{ route('admin.ai-agent.index') }}">
+                    <i class="bi bi-robot me-2"></i>Chat Admin (AI CRUD)
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('chat') ? 'active' : '' }}" href="{{ route('chat') }}">
-                    <i class="bi bi-chat-dots me-2"></i>Chat AI
+                    <i class="bi bi-chat-dots me-2"></i>Chat AI (Hỗ trợ)
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}" href="{{ route('admin.activity-logs.index') }}">
-                    <i class="bi bi-clock-history me-2"></i>Nhật ký
+                    <i class="bi bi-clock-history me-2"></i>Nhật ký hoạt động
                 </a>
             </li>
         </ul>
