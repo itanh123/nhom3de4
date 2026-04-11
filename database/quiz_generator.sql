@@ -221,3 +221,95 @@ SELECT
 FROM exams e
 LEFT JOIN exam_results er ON er.exam_id = e.id
 GROUP BY e.id, e.title, e.topic_id;
+
+-- ============================================================
+-- EXTENSIONS ADDED FOR HIERARCHY, EXAM SCHEDULING, AI CONFIG,
+-- ACTIVITY LOGS, AND IMPORT HISTORY
+-- Updated: 2026-04-06
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- A. ALTER TOPICS - Add hierarchical parent-child support
+-- ------------------------------------------------------------
+ALTER TABLE topics
+    ADD COLUMN parent_id BIGINT UNSIGNED NULL AFTER description,
+    ADD CONSTRAINT fk_topics_parent FOREIGN KEY (parent_id) REFERENCES topics(id) ON DELETE SET NULL,
+    ADD INDEX idx_topics_parent (parent_id);
+
+-- ------------------------------------------------------------
+-- B. ALTER EXAMS - Add scheduling and status columns
+-- ------------------------------------------------------------
+ALTER TABLE exams
+    ADD COLUMN start_time DATETIME NULL AFTER is_active,
+    ADD COLUMN end_time DATETIME NULL AFTER start_time,
+    ADD COLUMN status ENUM('draft','scheduled','open','closed','archived') NOT NULL DEFAULT 'draft' AFTER end_time,
+    ADD COLUMN is_published TINYINT(1) NOT NULL DEFAULT 0 AFTER status,
+    ADD INDEX idx_exams_schedule (start_time, end_time),
+    ADD INDEX idx_exams_status (status);
+
+-- ------------------------------------------------------------
+-- C. AI_CONFIGS - AI system configuration
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ai_configs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    provider VARCHAR(50) NOT NULL,
+    model_name VARCHAR(100) NOT NULL,
+    purpose ENUM('question_generation','answer_explanation','result_evaluation','learning_path','general') NOT NULL DEFAULT 'general',
+    api_key VARCHAR(500) NULL,
+    base_url VARCHAR(500) NULL,
+    temperature DECIMAL(3,2) NOT NULL DEFAULT 0.70,
+    max_tokens INT UNSIGNED NOT NULL DEFAULT 2000,
+    default_prompt TEXT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by BIGINT UNSIGNED NULL,
+    updated_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_ai_configs_creator FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ai_configs_updater FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_ai_configs_purpose (purpose),
+    INDEX idx_ai_configs_active (is_active)
+);
+
+-- ------------------------------------------------------------
+-- D. ACTIVITY_LOGS - Activity tracking
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(100) NULL,
+    entity_id BIGINT UNSIGNED NULL,
+    description TEXT NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_activity_logs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_activity_logs_user (user_id),
+    INDEX idx_activity_logs_action (action),
+    INDEX idx_activity_logs_entity (entity_type, entity_id)
+);
+
+-- ------------------------------------------------------------
+-- E. IMPORT_HISTORIES - Import tracking
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS import_histories (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    topic_id BIGINT UNSIGNED NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    total_rows INT UNSIGNED NOT NULL DEFAULT 0,
+    success_rows INT UNSIGNED NOT NULL DEFAULT 0,
+    failed_rows INT UNSIGNED NOT NULL DEFAULT 0,
+    status ENUM('pending','processing','completed','failed') NOT NULL DEFAULT 'pending',
+    error_message TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_import_histories_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_import_histories_topic FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE SET NULL,
+    INDEX idx_import_histories_user (user_id),
+    INDEX idx_import_histories_status (status)
+);

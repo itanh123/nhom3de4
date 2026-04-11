@@ -1,0 +1,10 @@
+ww/nhom3de4/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('E://laragon//www//...')
+#28 {main}
+"} 
+[2026-04-06 21:40:05] local.ERROR: DeepSeek API Error {"status":402,"body":{"error":{"message":"Insufficient Balance","type":"unknown_error","param":null,"code":"invalid_request_error"}}} 
+[2026-04-06 21:58:09] local.ERROR: OpenRouter API Error {"status":404,"body":{"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct.","code":404},"user_id":"user_33k6GcYdqBTeCMP5YrhLVxyhKYF"}} 
+[2026-04-06 21:58:09] local.WARNING: OpenRouter failed, attempting Groq fallback {"error":"OpenRouter API lß╗ùi: No endpoints found for mistralai/mistral-7b-instruct."} 
+[2026-04-06 22:00:41] local.ERROR: OpenRouter API Error {"status":404,"body":{"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_33k6GcYdqBTeCMP5YrhLVxyhKYF"}} 
+[2026-04-06 22:00:41] local.WARNING: OpenRouter failed, attempting Groq fallback {"error":"OpenRouter API lß╗ùi: No endpoints found for mistralai/mistral-7b-instruct:free."} 
+[2026-04-06 22:01:51] local.ERROR: OpenRouter API Error {"status":404,"body":{"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_33k6GcYdqBTeCMP5YrhLVxyhKYF"}} 
+[2026-04-06 22:01:51] local.WARNING: OpenRouter failed, attempting Groq fallback {"error":"OpenRouter API lß╗ùi: No endpoints found for mistralai/mistral-7b-instruct:free."} 

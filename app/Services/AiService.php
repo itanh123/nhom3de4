@@ -1,0 +1,560 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\AiConfig;
+use App\Models\ChatSession;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class AiService
+{
+    /**
+     * Get the active config for a given purpose.
+     */
+    public function getActiveConfig(string $purpose): ?AiConfig
+    {
+        return AiConfig::active()->byPurpose($purpose)->first();
+    }
+
+    /**
+     * Send a prompt to the configured AI provider.
+     */
+    protected function callAi(AiConfig $config, string $prompt): array
+    {
+        try {
+            $apiKey = decrypt($config->api_key);
+            $provider = $config->provider;
+            $model = $config->model_name;
+            $temperature = (float) ($config->temperature ?? 0.7);
+            $maxTokens = (int) ($config->max_tokens ?? 2000);
+
+            if ($provider === 'openrouter') {
+                return $this->callOpenRouter($apiKey, $model, $config->default_prompt, $prompt, $temperature, $maxTokens);
+            }
+
+            if ($provider === 'groq') {
+                return $this->callGroq($apiKey, $model, $config->default_prompt, $prompt, $temperature, $maxTokens);
+            }
+
+            if ($provider === 'openai') {
+                return $this->callOpenAI($apiKey, $model, $config->default_prompt, $prompt, $temperature, $maxTokens, $config->base_url);
+            }
+
+            if ($provider === 'anthropic') {
+                return $this->callAnthropic($apiKey, $model, $config->default_prompt, $prompt, $maxTokens, $config->base_url);
+            }
+
+            if ($provider === 'google') {
+                return $this->callGoogle($apiKey, $model, $config->default_prompt, $prompt, $temperature, $maxTokens);
+            }
+
+            return ['error' => "Provider '{$provider}' không được hỗ trợ."];
+
+        } catch (\Exception $e) {
+            Log::error('AI Service Error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ['error' => 'Lỗi khi gọi AI: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Call OpenRouter API (Primary - Recommended).
+     */
+    protected function callOpenRouter(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens): array
+    {
+        $url = 'https://openrouter.ai/api/v1/chat/completions';
+
+        try {
+            $messages = [];
+            if ($systemPrompt) {
+                $messages[] = ['role' => 'system', 'content' => $systemPrompt];
+            }
+            $messages[] = ['role' => 'user', 'content' => $prompt];
+
+            $response = Http::withoutVerifying()
+                ->timeout(120)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'HTTP-Referer' => config('app.url', 'http://localhost'),
+                    'X-Title' => config('app.name', 'AI Quiz System'),
+                ])
+                ->post($url, [
+                    'model' => $model,
+                    'messages' => $messages,
+                    'temperature' => $temperature,
+                    'max_tokens' => $maxTokens,
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $content = $data['choices'][0]['message']['content'] ?? '';
+                
+                if (empty($content)) {
+                    return ['error' => 'OpenRouter trả về phản hồi trống.'];
+                }
+                
+                return ['content' => $content];
+            }
+
+            $errorBody = $response->json();
+            $errorMessage = $errorBody['error']['message'] ?? $response->body();
+            
+            Log::error('OpenRouter API Error', [
+                'status' => $response->status(),
+                'body' => $errorBody,
+            ]);
+
+            return ['error' => 'OpenRouter lỗi: ' . $errorMessage];
+
+        } catch (\Exception $e) {
+            Log::error('OpenRouter Exception', ['message' => $e->getMessage()]);
+            return ['error' => 'Lỗi kết nối OpenRouter: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Call Groq API (Fallback - Free tier available).
+     */
+    protected function callGroq(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens): array
+    {
+        $url = 'https://api.groq.com/openai/v1/chat/completions';
+
+        try {
+            $messages = [];
+            if ($systemPrompt) {
+                $messages[] = ['role' => 'system', 'content' => $systemPrompt];
+            }
+            $messages[] = ['role' => 'user', 'content' => $prompt];
+
+            $response = Http::withoutVerifying()
+                ->timeout(120)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($url, [
+                    'model' => $model,
+                    'messages' => $messages,
+                    'temperature' => $temperature,
+                    'max_tokens' => $maxTokens,
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $content = $data['choices'][0]['message']['content'] ?? '';
+                
+                if (empty($content)) {
+                    return ['error' => 'Groq trả về phản hồi trống.'];
+                }
+                
+                return ['content' => $content];
+            }
+
+            $errorBody = $response->json();
+            $errorMessage = $errorBody['error']['message'] ?? $response->body();
+            
+            Log::error('Groq API Error', [
+                'status' => $response->status(),
+                'body' => $errorBody,
+            ]);
+
+            return ['error' => 'Groq lỗi: ' . $errorMessage];
+
+        } catch (\Exception $e) {
+            Log::error('Groq Exception', ['message' => $e->getMessage()]);
+            return ['error' => 'Lỗi kết nối Groq: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Call OpenAI API.
+     */
+    protected function callOpenAI(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens, ?string $baseUrl): array
+    {
+        $url = $baseUrl 
+            ? rtrim($baseUrl, '/') . '/chat/completions'
+            : 'https://api.openai.com/v1/chat/completions';
+
+        try {
+            $messages = [];
+            if ($systemPrompt) {
+                $messages[] = ['role' => 'system', 'content' => $systemPrompt];
+            }
+            $messages[] = ['role' => 'user', 'content' => $prompt];
+
+            $response = Http::withoutVerifying()
+                ->withToken($apiKey)
+                ->timeout(120)
+                ->post($url, [
+                    'model' => $model,
+                    'messages' => $messages,
+                    'temperature' => $temperature,
+                    'max_tokens' => $maxTokens,
+                ]);
+
+            if ($response->successful()) {
+                return ['content' => $response->json('choices.0.message.content', '')];
+            }
+
+            return ['error' => 'OpenAI API error: ' . $response->body()];
+
+        } catch (\Exception $e) {
+            Log::error('OpenAI Exception', ['message' => $e->getMessage()]);
+            return ['error' => 'Lỗi kết nối OpenAI: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Call Google AI API.
+     */
+    protected function callGoogle(string $apiKey, string $model, ?string $systemPrompt, string $prompt, float $temperature, int $maxTokens): array
+    {
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+
+        try {
+            $fullPrompt = ($systemPrompt ? $systemPrompt . "\n\n" : '') . $prompt;
+
+            $response = Http::withoutVerifying()->timeout(120)->post($url, [
+                'contents' => [
+                    ['parts' => [['text' => $fullPrompt]]],
+                ],
+                'generationConfig' => [
+                    'temperature' => $temperature,
+                    'maxOutputTokens' => $maxTokens,
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $content = $response->json('candidates.0.content.parts.0.text', '');
+                if (empty($content)) {
+                    return ['error' => 'Google AI trả về phản hồi trống.'];
+                }
+                return ['content' => $content];
+            }
+
+            return ['error' => 'Google AI API error: ' . $response->body()];
+
+        } catch (\Exception $e) {
+            Log::error('Google AI Exception', ['message' => $e->getMessage()]);
+            return ['error' => 'Lỗi kết nối Google AI: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Call Anthropic API.
+     */
+    protected function callAnthropic(string $apiKey, string $model, ?string $systemPrompt, string $prompt, int $maxTokens, ?string $baseUrl): array
+    {
+        $url = $baseUrl 
+            ? rtrim($baseUrl, '/') . '/v1/messages'
+            : 'https://api.anthropic.com/v1/messages';
+
+        try {
+            $response = Http::withoutVerifying()->withHeaders([
+                'x-api-key' => $apiKey,
+                'anthropic-version' => '2023-06-01',
+                'content-type' => 'application/json',
+            ])->timeout(120)->post($url, [
+                'model' => $model,
+                'max_tokens' => $maxTokens,
+                'system' => $systemPrompt ?? 'You are a helpful educational assistant.',
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $content = $response->json('content.0.text', '');
+                if (empty($content)) {
+                    return ['error' => 'Anthropic trả về phản hồi trống.'];
+                }
+                return ['content' => $content];
+            }
+
+            return ['error' => 'Anthropic API error: ' . $response->body()];
+
+        } catch (\Exception $e) {
+            Log::error('Anthropic Exception', ['message' => $e->getMessage()]);
+            return ['error' => 'Lỗi kết nối Anthropic: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Generate questions from AI.
+     */
+    public function generateQuestions(array $payload): array
+    {
+        $config = $this->getActiveConfig(AiConfig::PURPOSE_QUESTION_GENERATION);
+
+        if (!$config) {
+            return ['error' => 'Chưa có cấu hình AI active cho mục đích tạo câu hỏi. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+        }
+
+        // Build prompt
+        $prompt = "Tạo {$payload['number']} câu hỏi trắc nghiệm về chủ đề: {$payload['topic']}.\n";
+        $prompt .= "Loại: {$payload['type']}, Độ khó: {$payload['difficulty']}.\n";
+
+        if (!empty($payload['prompt'])) {
+            $prompt .= "Yêu cầu bổ sung: {$payload['prompt']}\n";
+        }
+
+        if (!empty($payload['document'])) {
+            $prompt .= "\nNội dung tài liệu tham khảo:\n" . substr($payload['document'], 0, 5000) . "\n";
+        }
+
+        $prompt .= "\nTrả về JSON array, mỗi phần tử có format:\n";
+        $prompt .= '[{"content": "Nội dung câu hỏi", "answers": [{"option_text": "Đáp án A", "is_correct": false}, ...]}]';
+
+        // Try the configured AI first
+        $result = $this->callAi($config, $prompt);
+
+        // If error, try fallback with ENV variables
+        if (isset($result['error'])) {
+            Log::warning('AI Config failed, trying fallback', [
+                'purpose' => AiConfig::PURPOSE_QUESTION_GENERATION,
+                'error' => $result['error'],
+            ]);
+            $fallback = $this->directApiCall($prompt);
+            if (!isset($fallback['error'])) {
+                return $fallback;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Evaluate exam result with AI.
+     */
+    public function evaluateResult(array $payload): array
+    {
+        $config = $this->getActiveConfig(AiConfig::PURPOSE_RESULT_EVALUATION);
+
+        if (!$config) {
+            return ['error' => 'Chưa có cấu hình AI active cho đánh giá kết quả. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+        }
+
+        $prompt = "Đánh giá kết quả thi của học sinh:\n";
+        $prompt .= "Tên: {$payload['student_name']}\n";
+        $prompt .= "Bài thi: {$payload['exam_title']} (Chủ đề: {$payload['topic_name']})\n";
+        $prompt .= "Điểm: {$payload['score_pct']}% ({$payload['correct_count']}/{$payload['total_questions']} đúng)\n";
+        $prompt .= "Kết quả: " . ($payload['passed'] ? 'Đạt' : 'Không đạt') . "\n";
+
+        if (!empty($payload['weak_topics'])) {
+            $prompt .= "Chủ đề yếu: " . implode(', ', $payload['weak_topics']) . "\n";
+        }
+        if (!empty($payload['strong_topics'])) {
+            $prompt .= "Chủ đề mạnh: " . implode(', ', $payload['strong_topics']) . "\n";
+        }
+
+        $prompt .= "\nTrả về JSON:\n{\"summary\": \"Nhận xét tổng quát\", \"strengths\": [\"...\"], \"weaknesses\": [\"...\"], \"suggestions\": [\"...\"]}";
+
+        $result = $this->callAi($config, $prompt);
+
+        if (isset($result['error'])) {
+            Log::warning('AI Config failed, trying fallback', [
+                'purpose' => AiConfig::PURPOSE_RESULT_EVALUATION,
+                'error' => $result['error'],
+            ]);
+            $fallback = $this->directApiCall($prompt);
+            if (!isset($fallback['error'])) {
+                return $fallback;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Explain an answer with AI.
+     */
+    public function explainAnswer(array $payload): array
+    {
+        $config = $this->getActiveConfig(AiConfig::PURPOSE_ANSWER_EXPLANATION);
+
+        if (!$config) {
+            return ['error' => 'Chưa có cấu hình AI active cho giải thích đáp án. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+        }
+
+        $prompt = "Giải thích chi tiết cho câu hỏi trắc nghiệm:\n";
+        $prompt .= "Câu hỏi: {$payload['question']}\n";
+        $prompt .= "Đáp án đúng: {$payload['correct_answer']}\n";
+        $prompt .= "Câu trả lời của học sinh: {$payload['student_answer']}\n";
+        $prompt .= "Kết quả: " . ($payload['is_correct'] ? 'Đúng' : 'Sai') . "\n\n";
+        $prompt .= "Hãy giải thích tại sao đáp án đúng là đúng và giúp học sinh hiểu rõ hơn.";
+
+        $result = $this->callAi($config, $prompt);
+
+        if (isset($result['error'])) {
+            Log::warning('AI Config failed, trying fallback', [
+                'purpose' => AiConfig::PURPOSE_ANSWER_EXPLANATION,
+                'error' => $result['error'],
+            ]);
+            $fallback = $this->directApiCall($prompt);
+            if (!isset($fallback['error'])) {
+                return $fallback;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Generate a learning path based on result.
+     */
+    public function generateLearningPath(array $payload): array
+    {
+        $config = $this->getActiveConfig(AiConfig::PURPOSE_LEARNING_PATH);
+
+        if (!$config) {
+            return ['error' => 'Chưa có cấu hình AI active cho lộ trình học tập. Vui lòng thêm và bật cấu hình OpenRouter hoặc Groq trong Quản lý API.'];
+        }
+
+        $prompt = "Tạo lộ trình học tập cho học sinh:\n";
+        $prompt .= "Tên: {$payload['student_name']}\n";
+        $prompt .= "Bài thi: {$payload['exam_title']} (Chủ đề: {$payload['topic_name']})\n";
+        $prompt .= "Điểm: {$payload['score_pct']}%\n";
+
+        if (!empty($payload['weak_topics'])) {
+            $prompt .= "Chủ đề cần cải thiện: " . implode(', ', $payload['weak_topics']) . "\n";
+        }
+
+        $prompt .= "\nTrả về JSON:\n";
+        $prompt .= '{"overall_goal": "Mục tiêu tổng", "weekly_plan": [{"week": 1, "focus": "Nội dung", "activities": ["..."], "estimated_time": "..."}], "recommended_resources": ["..."], "tips": ["..."]}';
+
+        $result = $this->callAi($config, $prompt);
+
+        if (isset($result['error'])) {
+            Log::warning('AI Config failed, trying fallback', [
+                'purpose' => AiConfig::PURPOSE_LEARNING_PATH,
+                'error' => $result['error'],
+            ]);
+            $fallback = $this->directApiCall($prompt);
+            if (!isset($fallback['error'])) {
+                return $fallback;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Generate AI response for chat.
+     */
+    public function generateResponse(ChatSession $session, string $userMessage): array
+    {
+        $config = $this->getActiveConfig(AiConfig::PURPOSE_GENERAL);
+
+        // Get chat history for context
+        $messages = $session->messages()
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->reverse()
+            ->values();
+
+        $context = '';
+        foreach ($messages as $msg) {
+            $role = $msg->sender_type === 'user' ? 'user' : 'assistant';
+            $context .= "\n{$role}: " . $msg->content;
+        }
+
+        $fullPrompt = "Cuộc trò chuyện trước đó:{$context}\n\nuser: {$userMessage}\n\nHãy trả lời dựa trên ngữ cảnh cuộc trò chuyện.";
+
+        // Try AI config first
+        if ($config) {
+            $result = $this->callAi($config, $fullPrompt);
+
+            if (!isset($result['error'])) {
+                return $result;
+            }
+
+            Log::warning('AI Config failed for chat, trying fallback', [
+                'purpose' => AiConfig::PURPOSE_GENERAL,
+                'error' => $result['error'],
+            ]);
+        }
+
+        // Fallback to env-based API
+        return $this->directApiCall($fullPrompt);
+    }
+
+    /**
+     * Direct API call using env variables (fallback).
+     */
+    protected function directApiCall(string $message): array
+    {
+        // Try OpenRouter first
+        $apiKey = env('OPENROUTER_API_KEY');
+        if ($apiKey && $apiKey !== 'your-openrouter-api-key-here') {
+            $result = $this->callOpenRouterDirect($apiKey, env('OPENROUTER_MODEL', 'mistralai/mistral-7b-instruct'), $message);
+            if ($result['success']) {
+                return $result;
+            }
+        }
+
+        // Try Groq fallback
+        $apiKey = env('GROQ_API_KEY');
+        if ($apiKey && $apiKey !== 'your-groq-api-key-here') {
+            $result = $this->callGroqDirect($apiKey, env('GROQ_MODEL', 'llama-3.3-70b-versatile'), $message);
+            if ($result['success']) {
+                return $result;
+            }
+        }
+
+        return ['error' => 'Không có API key nào được cấu hình.'];
+    }
+
+    protected function callOpenRouterDirect(string $apiKey, string $model, string $message): array
+    {
+        try {
+            $response = Http::withoutVerifying()
+                ->timeout(120)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'HTTP-Referer' => config('app.url', 'http://localhost'),
+                    'X-Title' => config('app.name', 'AI Quiz System'),
+                ])
+                ->post('https://openrouter.ai/api/v1/chat/completions', [
+                    'model' => $model,
+                    'messages' => [['role' => 'user', 'content' => $message]],
+                ]);
+
+            if ($response->successful()) {
+                $content = $response->json('choices.0.message.content', '');
+                return ['success' => true, 'content' => $content];
+            }
+
+            return ['success' => false, 'error' => 'OpenRouter error: ' . $response->body()];
+
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    protected function callGroqDirect(string $apiKey, string $model, string $message): array
+    {
+        try {
+            $response = Http::withoutVerifying()
+                ->timeout(120)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => $model,
+                    'messages' => [['role' => 'user', 'content' => $message]],
+                ]);
+
+            if ($response->successful()) {
+                $content = $response->json('choices.0.message.content', '');
+                return ['success' => true, 'content' => $content];
+            }
+
+            return ['success' => false, 'error' => 'Groq error: ' . $response->body()];
+
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+}
